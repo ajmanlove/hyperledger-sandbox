@@ -26,6 +26,7 @@ func (t *SimpleContractChaincode) Init(stub shim.ChaincodeStubInterface, functio
 
 func (t *SimpleContractChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
+	logger.Debug("enter Invoke")
 	switch function {
 		case "submit_contract":
 			return t.submit_contract(stub, args)
