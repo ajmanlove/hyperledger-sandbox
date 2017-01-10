@@ -9,6 +9,8 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
+var logger = shim.NewLogger("SimpleContractChaincode")
+
 type SimpleContractChaincode struct {
 }
 
@@ -54,6 +56,7 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	sc, err := t.get_contract_template()
 
 	if err != nil {
+		logger.Error(err)
 		return nil, errors.New("Failed to get contract stub")
 	}
 
