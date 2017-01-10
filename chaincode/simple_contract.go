@@ -84,9 +84,7 @@ func (t *SimpleContractChaincode) save_contract(stub shim.ChaincodeStubInterface
 		return nil, errors.New("Failed to serialize SimpleContract json")
 	}
 
-	stub.PutState(id, bytes)
-
-	return nil, nil
+	return stub.PutState(id, bytes)
 }
 
 
