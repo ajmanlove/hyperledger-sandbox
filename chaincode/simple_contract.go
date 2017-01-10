@@ -35,7 +35,17 @@ func (t *SimpleContractChaincode) Invoke(stub shim.ChaincodeStubInterface, funct
 }
 
 func (t *SimpleContractChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	return nil, nil
+
+	switch function {
+		case "get_contract":
+			bytes, err := stub.GetState(args[0])
+			if err != nil {
+				return nil, errors.New("Unable to retrieve contract with id " + args[0])
+			}
+			return bytes, nil
+		default:
+			return nil, errors.New("Unknown function : " + function)
+	}
 }
 
 // submit a simple contract
