@@ -30,7 +30,8 @@ func (t *SimpleContractChaincode) Invoke(stub shim.ChaincodeStubInterface, funct
 	switch function {
 		case "submit_contract":
 			return t.submit_contract(stub, args)
-
+		case "remove_contract":
+			return t.remove_contract(stub, args)
 		default:
 			return nil, errors.New("Unknown Invoke function : " + function)
 	}
@@ -66,9 +67,12 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	id := args[0]
 	bytes, _ := stub.GetState(id)
 	if bytes != nil {
-		return nil, errors.New("Record with id " + id + " exists!")
+		e := errors.New("Record with id " + id + " exists!")
+		logger.Error(e)
+
+		return nil, e
 	}
-	
+
 	name := args[1]
 	createDate, err := strconv.ParseUint(args[2], 10, 64)
 	if err != nil {
@@ -77,6 +81,7 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	}
 
 	tiv, err := strconv.Atoi(args[3])
+
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Invalid create date, expected unix timestamp " + args[2])
@@ -87,6 +92,24 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	sc.TotalInsuredValue = tiv
 
 	return t.save_contract(stub, id, sc)
+}
+
+func (t *SimpleContractChaincode) remove_contract(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	id := args[0]
+
+	logger.Debug("remove_contract () id: ", id)
+	bytes, err := stub.GetState(id)
+	if bytes == nil {
+		return nil, errors.New("No contract exists with id : " + id)
+	}
+
+	err = stub.DelState(id)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to remove contract with id : " + id)
+	}
+
+	return nil, nil
 }
 
 // save contract to the ledger
