@@ -104,7 +104,7 @@ func (t *SimpleContractChaincode) get_contract_template() (SimpleContract, error
 	// just do structure instantiation...
 	itemName         		:= "\"itemName\":\"UNDEFINED\", "							// Variables to define the JSON
 	createDate       		:= "\"createDate\":\"UNDEFINED\", "
-	totalInsuredValue   := "\"totalInsuredValue\":\"UNDEFINED\", "
+	totalInsuredValue   := "\"totalInsuredValue\":\"UNDEFINED\" "
 
 	sc_json := "{"+itemName+createDate+totalInsuredValue+"}"
 
