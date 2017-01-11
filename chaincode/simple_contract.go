@@ -30,6 +30,8 @@ func (t *SimpleContractChaincode) Invoke(stub shim.ChaincodeStubInterface, funct
 	switch function {
 		case "submit_contract":
 			return t.submit_contract(stub, args)
+		case "update_total_insured_value":
+			return t.update_tiv(stub, args)
 		case "remove_contract":
 			return t.remove_contract(stub, args)
 		default:
@@ -94,6 +96,27 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	return t.save_contract(stub, id, sc)
 }
 
+func (t *SimpleContractChaincode) update_tiv(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	id := args[0]
+	tiv, err := strconv.Atoi(args[3])
+
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Invalid create date, expected unix timestamp " + args[2])
+	}
+
+	logger.Debug("update_tiv() id : " + id)
+
+	sc, err := t.get_sc_struct(stub, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sc.TotalInsuredValue = tiv
+	return t.save_contract(stub, id, sc)
+}
+
 func (t *SimpleContractChaincode) remove_contract(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	id := args[0]
 
@@ -130,6 +153,26 @@ func (t *SimpleContractChaincode) save_contract(stub shim.ChaincodeStubInterface
 	return nil, nil
 }
 
+func (t *SimpleContractChaincode) get_sc_struct(stub shim.ChaincodeStubInterface, id string) (SimpleContract, error) {
+	var sc SimpleContract
+
+	bytes, err := stub.GetState(id)
+	if err != nil {
+		logger.Error(err)
+		return sc, errors.New("Failed to get contract with id : " + id)
+	}
+	if bytes == nil {
+		return sc, errors.New("Contract with id " + id + " does not exist!")
+	}
+
+	err = json.Unmarshal(bytes, &sc)
+	if err != nil {
+		logger.Error(err)
+		return sc, errors.New("Failed to deserialize SimpleContract, id " + id)
+	}
+
+	return sc, err
+}
 
 // Get a generic contract struct
 func (t *SimpleContractChaincode) get_contract_template() (SimpleContract, error) {
