@@ -98,7 +98,7 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 
 func (t *SimpleContractChaincode) update_tiv(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	id := args[0]
-	tiv, err := strconv.Atoi(args[3])
+	tiv, err := strconv.Atoi(args[1])
 
 	if err != nil {
 		logger.Error(err)
