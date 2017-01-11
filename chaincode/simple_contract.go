@@ -64,6 +64,11 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	}
 
 	id := args[0]
+	bytes, _ := stub.GetState(id)
+	if bytes != nil {
+		return nil, errors.New("Record with id " + id + " exists!")
+	}
+	
 	name := args[1]
 	createDate, err := strconv.ParseUint(args[2], 10, 64)
 	if err != nil {
