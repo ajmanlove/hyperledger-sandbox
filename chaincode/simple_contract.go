@@ -99,18 +99,8 @@ func (t *SimpleContractChaincode) save_contract(stub shim.ChaincodeStubInterface
 
 // Get a generic contract struct
 func (t *SimpleContractChaincode) get_contract_template() (SimpleContract, error) {
-	var sc SimpleContract
-
-	// just do structure instantiation...
-	itemName         		:= "\"itemName\":\"UNDEFINED\", "							// Variables to define the JSON
-	createDate       		:= "\"createDate\":\"UNDEFINED\", "
-	totalInsuredValue   := "\"totalInsuredValue\":\"UNDEFINED\" "
-
-	sc_json := "{"+itemName+createDate+totalInsuredValue+"}"
-
-	err := json.Unmarshal([]byte(sc_json), &sc)
-
-	return sc, err
+	sc := SimpleContract{ItemName: "UNDEFINED", CreateDate: 0, TotalInsuredValue: 0}
+	return sc, nil
 }
 
 
