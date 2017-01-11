@@ -41,8 +41,10 @@ func (t *SimpleContractChaincode) Query(stub shim.ChaincodeStubInterface, functi
 
 	switch function {
 		case "get_contract":
+			logger.Debug("Query:get_contract : %s", args[0])
 			bytes, err := stub.GetState(args[0])
 			if err != nil {
+				logger.Error(err)
 				return nil, errors.New("Unable to retrieve contract with id " + args[0])
 			}
 			return bytes, nil
@@ -53,7 +55,7 @@ func (t *SimpleContractChaincode) Query(stub shim.ChaincodeStubInterface, functi
 
 // submit a simple contract
 func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
+	logger.Debug("submit_contract() %s", args[0])
 	sc, err := t.get_contract_template()
 
 	if err != nil {
@@ -65,11 +67,13 @@ func (t *SimpleContractChaincode) submit_contract(stub shim.ChaincodeStubInterfa
 	name := args[1]
 	createDate, err := strconv.ParseUint(args[2], 10, 64)
 	if err != nil {
+		logger.Error(err)
 		return nil, errors.New("Invalid create date, expected unix timestamp " + args[2])
 	}
 
-	tiv, err := strconv.Atoi(args[2])
+	tiv, err := strconv.Atoi(args[3])
 	if err != nil {
+		logger.Error(err)
 		return nil, errors.New("Invalid create date, expected unix timestamp " + args[2])
 	}
 
@@ -85,11 +89,13 @@ func (t *SimpleContractChaincode) save_contract(stub shim.ChaincodeStubInterface
 
   bytes, err := json.Marshal(sc)
 	if err != nil {
+		logger.Error(err)
 		return nil, errors.New("Failed to serialize SimpleContract json")
 	}
 
 	err = stub.PutState(id, bytes)
 	if err != nil {
+		logger.Error(err)
 		return nil, errors.New("Failed to save contract, id : " + id)
 	}
 
