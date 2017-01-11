@@ -16,8 +16,8 @@ type SimpleContractChaincode struct {
 
 type SimpleContract struct {
 	ItemName 							string 	`json:"itemName"`
-	CreateDate 						uint64 	`json:"createDate"`
-	TotalInsuredValue 		int 		`json:"totalInsuredValue"`
+	CreateDate 						uint64 	`json:"createDate,string"`
+	TotalInsuredValue 		int 		`json:"totalInsuredValue,string"`
 }
 
 func (t *SimpleContractChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
