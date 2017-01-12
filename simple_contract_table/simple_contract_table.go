@@ -76,11 +76,16 @@ func (t *SimpleContractTableChaincode) get_contract(stub shim.ChaincodeStubInter
 	key0 := shim.Column{Value: &shim.Column_String_{String_: id}}
 	key = append(key, key0)
 
-	row, _ := stub.GetRow("tableOne", key)
+	row, err := stub.GetRow(contractTable, key)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to get row with key " + id)
+	}
 
 	rowString := fmt.Sprintf("%s", row)
 	return rowString, nil
 }
+
 // submit a simple contract
 func (t *SimpleContractTableChaincode) submit_contract(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	logger.Debug("submit_contract() %s", args[0])
@@ -143,10 +148,15 @@ func (t *SimpleContractTableChaincode) save_contract(stub shim.ChaincodeStubInte
 
 	row := shim.Row{Columns: columns}
 
-	_, err := stub.InsertRow(contractTable, row)
+	r, err := stub.InsertRow(contractTable, row)
 	if err != nil {
+		logger.Error(err)
 		return nil, errors.New("Unable to save contract row, id : " + id)
 	}
+	if !r {
+		return nil, errors.New("Row did not save! id : " + id)
+	}
+
 
 	return nil, nil
 }
