@@ -55,21 +55,32 @@ func (t *SimpleContractTableChaincode) Invoke(stub shim.ChaincodeStubInterface, 
 
 func (t *SimpleContractTableChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
-	// switch function {
-	// 	case "get_contract":
-	// 		logger.Debug("Query:get_contract : %s", args[0])
-	// 		bytes, err := stub.GetState(args[0])
-	// 		if err != nil {
-	// 			logger.Error(err)
-	// 			return nil, errors.New("Unable to retrieve contract with id " + args[0])
-	// 		}
-	// 		return bytes, nil
-	// 	default:
-	// 		return nil, errors.New("Unknown function : " + function)
-	// }
+	switch function {
+		case "get_contract":
+			logger.Debug("Query:get_contract : %s", args[0])
+			sc, _ := t.get_contract(stub, args[0])
+			// bytes, err := stub.GetState(args[0])
+			// if err != nil {
+			// 	logger.Error(err)
+			// 	return nil, errors.New("Unable to retrieve contract with id " + args[0])
+			// }
+			return []byte(sc), nil
+		default:
+			return nil, errors.New("Unknown function : " + function)
+	}
 	return nil, nil
 }
 
+func (t *SimpleContractTableChaincode) get_contract(stub shim.ChaincodeStubInterface, id string) (string, error) {
+	var key []shim.Column
+	key0 := shim.Column{Value: &shim.Column_String_{String_: id}}
+	key = append(key, key0)
+
+	row, _ := stub.GetRow("tableOne", key)
+
+	rowString := fmt.Sprintf("%s", row)
+	return rowString, nil
+}
 // submit a simple contract
 func (t *SimpleContractTableChaincode) submit_contract(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	logger.Debug("submit_contract() %s", args[0])
