@@ -79,7 +79,7 @@ func (t *SimpleContractTableChaincode) get_contract(stub shim.ChaincodeStubInter
 	row, err := stub.GetRow(contractTable, key)
 	if err != nil {
 		logger.Error(err)
-		return nil, errors.New("Failed to get row with key " + id)
+		return "", errors.New("Failed to get row with key " + id)
 	}
 
 	rowString := fmt.Sprintf("%s", row)
