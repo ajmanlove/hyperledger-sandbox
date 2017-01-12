@@ -158,3 +158,13 @@ func (t *SimpleContractTableChaincode) create_contract_table(stub shim.Chaincode
 	columnDefs = append(columnDefs, &c4)
 	return stub.CreateTable(contractTable, columnDefs)
 }
+
+// ============================================================================================================================
+// Main
+// ============================================================================================================================
+func main() {
+	err := shim.Start(new(SimpleContractTableChaincode))
+	if err != nil {
+		fmt.Printf("Error starting Simple chaincode: %s", err)
+	}
+}
