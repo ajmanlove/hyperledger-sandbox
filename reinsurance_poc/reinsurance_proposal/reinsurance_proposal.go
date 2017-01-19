@@ -11,28 +11,28 @@ import (
 
 var logger = shim.NewLogger("SimpleContractChaincode")
 
-type LiabilityContractCC struct {
+type ReinsuranceProposalCC struct {
 }
 
 // TBD
-type LiabilityContract struct {
+type ReinsureProposal struct {
 	ItemName 							string 	`json:"itemName"`
 	CreateDate 						uint64 	`json:"createDate,string"`
 	TotalInsuredValue 		int 		`json:"totalInsuredValue,string"`
 }
 
-func (t *LiabilityContractCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	return nil, errors.New("No Init Implementation")
 }
 
-func (t *LiabilityContractCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *ReinsuranceProposalCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	logger.Debug("enter Invoke")
 	return nil, errors.New("No Invoke Implementation")
 
 }
 
-func (t *LiabilityContractCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *ReinsuranceProposalCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	return nil, errors.New("No Query Implementation")
 }
@@ -41,7 +41,7 @@ func (t *LiabilityContractCC) Query(stub shim.ChaincodeStubInterface, function s
 // Main
 // ============================================================================================================================
 func main() {
-	err := shim.Start(new(LiabilityContractCC))
+	err := shim.Start(new(ReinsureProposalCC))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
