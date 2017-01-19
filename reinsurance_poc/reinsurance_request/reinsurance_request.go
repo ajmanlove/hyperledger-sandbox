@@ -61,6 +61,15 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 	logger.Debug("enter Query : " + function)
 
 	switch function {
+		case "get_request":
+			id := args[0]
+			bytes, err := stub.GetState(id)
+			if err != nil {
+				logger.Error(err)
+				return nil, errors.New("Unable to retrieve contract with id " + args[0])
+			}
+			return bytes, nil
+
 		default:
 			return nil, errors.New("Unknown Query function : " + function)
 	}
@@ -87,7 +96,15 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		logger.Error(err)
 		return nil, errors.New("Failed to serialize ReinsuranceRequest object")
 	}
-	return bytes, nil
+
+	id := "1"
+
+	err = stub.PutState(id, bytes)
+	if err != nil {
+		logger.Error("err")
+		return nil, errors.New("Failed to put request")
+	}
+	return nil, nil
 }
 
 // ============================================================================================================================
