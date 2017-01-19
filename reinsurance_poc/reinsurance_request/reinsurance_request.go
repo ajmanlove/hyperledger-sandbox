@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	// "encoding/json"
+	"encoding/json"
 	// "strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -48,9 +48,8 @@ func (t *ReinsuranceRequestCC) Invoke(stub shim.ChaincodeStubInterface, function
 	logger.Debug("enter Invoke : " + function)
 
 	switch function {
-		case "test":
-			fmt.Printf("Invoke:Test args : %s", args)
-			return nil, nil
+	case "submit_request":
+			return t.submit_request(stub, args)
 		default:
 			return nil, errors.New("Unknown Invoke function : " + function)
 	}
@@ -66,6 +65,29 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 			return nil, errors.New("Unknown Query function : " + function)
 	}
 
+}
+
+func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	rr := ReinsuranceRequest {
+		ContractType : "liability",
+		ContractSubType	: "facultative",
+		AssetType	: "railroad",
+		TotalInsuredValue : 100000000,
+		AggregateLimit : 100000000,
+		PortfolioHash	: "2e1b1b0cb7bfce4cf47706752a234f29",
+		PortfolioURL : "http://mybucket.s3-website-us-east-1.amazonaws.com/",
+		InExcessOf : 50000000,
+		Status : "open",
+		Requestor	: "myusername",
+		Requestees	: []string {"someone", "someoneelse"},
+	}
+
+	bytes, err := json.Marshal(rr)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to serialize ReinsuranceRequest object")
+	}
+	return bytes, nil
 }
 
 // ============================================================================================================================
