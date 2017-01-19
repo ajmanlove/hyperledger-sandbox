@@ -31,22 +31,41 @@ type ReinsuranceRequest struct {
 
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
-	if len(args) != 0 {
-		return nil, errors.New("Init does not support arguments")
+
+	switch function {
+		case "init":
+			if len(args) != 0 {
+				return nil, errors.New("Init does not support arguments")
+			}
+			return nil, nil
+		default:
+			return nil, errors.New("Unrecognized init function : " + function)
 	}
-	return nil, nil
 }
 
 func (t *ReinsuranceRequestCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
-	logger.Debug("enter Invoke")
-	return nil, errors.New("No Invoke Implementation")
+	logger.Debug("enter Invoke : " + function)
+
+	switch function {
+		case "test":
+			fmt.Printf("Invoke:Test args : %s", args)
+			return nil, nil
+		default:
+			return nil, errors.New("Unknown Invoke function : " + function)
+	}
 
 }
 
 func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
-	return nil, errors.New("No Query Implementation")
+	logger.Debug("enter Query : " + function)
+
+	switch function {
+		default:
+			return nil, errors.New("Unknown Query function : " + function)
+	}
+
 }
 
 // ============================================================================================================================
@@ -55,6 +74,6 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 func main() {
 	err := shim.Start(new(ReinsuranceRequestCC))
 	if err != nil {
-		fmt.Printf("Error starting Simple chaincode: %s", err)
+		fmt.Printf("Error starting ReinsuranceRequestCC: %s", err)
 	}
 }
