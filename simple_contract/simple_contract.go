@@ -150,6 +150,13 @@ func (t *SimpleContractChaincode) save_contract(stub shim.ChaincodeStubInterface
 		return nil, errors.New("Failed to save contract, id : " + id)
 	}
 
+
+	err = stub.SetEvent("save_contract_event", []byte(bytes))
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to set event, id : " + id)
+	}
+	
 	return nil, nil
 }
 
