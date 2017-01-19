@@ -32,7 +32,7 @@ type ReinsuranceRequest struct {
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
 	if len(args) != 0 {
-		nil, errors.New("Init does not support arguments")
+		return nil, errors.New("Init does not support arguments")
 	}
 	return nil, nil
 }
