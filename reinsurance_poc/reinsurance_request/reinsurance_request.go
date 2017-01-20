@@ -10,7 +10,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-var logger = shim.NewLogger("SimpleContractChaincode")
+var logger = shim.NewLogger("ReinsuranceRequestCC")
 
 type ReinsuranceRequestCC struct {
 }

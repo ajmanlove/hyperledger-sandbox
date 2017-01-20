@@ -9,17 +9,16 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-var logger = shim.NewLogger("ReinsuranceProposalCC")
+var logger = shim.NewLogger("EnrollmentServiceCC")
 
-type ReinsuranceProposalCC struct {
+type EnrollmentServiceCC struct {
 }
 
 // TBD
-type ReinsuranceProposal struct {
-
+type EnrollmentService struct {
 }
 
-func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *EnrollmentServiceCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
 	if len(args) != 0 {
 		return nil, errors.New("Init does not support arguments")
@@ -27,14 +26,14 @@ func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function 
 	return nil, nil
 }
 
-func (t *ReinsuranceProposalCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	logger.Debug("enter Invoke")
 	return nil, errors.New("No Invoke Implementation")
 
 }
 
-func (t *ReinsuranceProposalCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	return nil, errors.New("No Query Implementation")
 }
@@ -43,7 +42,7 @@ func (t *ReinsuranceProposalCC) Query(stub shim.ChaincodeStubInterface, function
 // Main
 // ============================================================================================================================
 func main() {
-	err := shim.Start(new(ReinsuranceProposalCC))
+	err := shim.Start(new(EnrollmentServiceCC))
 	if err != nil {
 		fmt.Printf("Error starting ReinsuranceProposalCC: %s", err)
 	}
