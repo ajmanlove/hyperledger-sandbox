@@ -50,10 +50,8 @@ func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function 
 
 	logger.Debug("enter Invoke")
 	switch function {
-		// case "enroll":
-		// 	return t.enroll(stub, args)
-		case "enroll0":
-			return t.enroll_0(stub, args)
+		case "enroll":
+			return t.enroll(stub, args)
 		default:
 			return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
@@ -61,11 +59,16 @@ func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function 
 }
 
 func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-
+	switch function {
+		case "get_contact":
+			t.get_contact(stub, args)
+		default:
+			return nil, errors.New("Unrecognized function : " + function)
+	}
 	return nil, errors.New("No Query Implementation")
 }
 
-func (t *EnrollmentServiceCC) enroll_0(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	logger.Debug("enroll_0 ...")
 
 	callerCert, err := stub.GetCallerCertificate()
@@ -103,50 +106,29 @@ func (t *EnrollmentServiceCC) enroll_0(stub shim.ChaincodeStubInterface, args []
 	}
 
 	return nil, nil
-
-	return nil, nil
 }
 
-// TODO keeping this code around
-// func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-// 	logger.Debug("Read cert attributes ...")
-//
-// 	callerCert, err := stub.GetCallerCertificate()
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return nil, errors.New("Failed to get caller cert")
-// 	}
-// 	logger.Debugf("Caller CERT is [ %v ]", callerCert)
-//
-// 	callerId, err := stub.ReadCertAttribute("enrollmentId")
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return nil, errors.New("Failed to read role attribute")
-// 	}
-// 	logger.Debugf("caller enrollmentId is [ %v ]", callerId)
-//
-// 	CallerContact, err := stub.ReadCertAttribute("contact")
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return nil, errors.New("Failed to read contact attribute")
-// 	}
-// 	logger.Debugf("Caller CONTACT is [ %v ]", CallerContact)
-//
-// 	id := string(callerId)
-//
-// 	ok, err := stub.InsertRow(enrollmentTable, shim.Row{
-// 		Columns: []*shim.Column{
-// 			&shim.Column{Value: &shim.Column_String_{String_: id}},
-// 			&shim.Column{Value: &shim.Column_Bytes{Bytes: callerCert}}},
-// 	})
-//
-// 	if !ok && err == nil {
-// 		fmt.Println("Error inserting row")
-// 		return nil, errors.New("enrollmentId was already enrolled " + id)
-// 	}
-//
-// 	return nil, nil
-// }
+func (t *EnrollmentServiceCC) get_contact(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 1 {
+		return nil, errors.New("Expected 1 arg for get_contact")
+	}
+
+	enrollId := args[0]
+
+	var columns []shim.Column
+	col1 := shim.Column{Value: &shim.Column_String_{String_: enrollId}}
+	columns = append(columns, col1)
+
+	row, err := stub.GetRow(enrollmentTable, columns)
+	if err != nil {
+		return nil, fmt.Errorf("Failed retrieving enrollment [%s]: [%s]", enrollId, err)
+	}
+
+	contact := row.Columns[1].GetBytes()
+
+	return contact, nil
+
+}
 
 // ============================================================================================================================
 // Main
