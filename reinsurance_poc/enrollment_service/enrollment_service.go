@@ -6,6 +6,8 @@ import (
 	// "encoding/json"
 	// "strconv"
 
+	"github.com/hyperledger/fabric/core/chaincode/shim/crypto/attr"
+
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
@@ -47,6 +49,8 @@ func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function 
 	switch function {
 		case "enroll":
 			return t.enroll(stub, args)
+		case "enroll0":
+			return t.enroll_0(stub, args)
 		default:
 			return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
@@ -58,6 +62,34 @@ func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function s
 	return nil, errors.New("No Query Implementation")
 }
 
+func (t *EnrollmentServiceCC) enroll_0(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	logger.Debug("enroll_0 ...")
+
+	callerCert, err := stub.GetCallerCertificate()
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to get caller cert")
+	}
+	logger.Debugf("Caller CERT is [ %v ]", callerCert)
+
+	id, err := attr.GetValueFrom("id", callerCert)
+	if err != nil {
+		logger.Errorf("Failed to get id from cert. error is [ %v ]", err)
+		return nil, errors.New("Failed to get id from cert")
+	}
+	logger.Debugf("Caller ID is [ %v ]", id)
+
+	contact, err := attr.GetValueFrom("contact", callerCert)
+	if err != nil {
+		logger.Errorf("Failed to get contact from cert. error is [ %v ]", err)
+		return nil, errors.New("Failed to get contact from cert")
+	}
+	logger.Debugf("Caller CONTACT is [ %v ]", contact)
+
+	return nil, nil
+}
+
+// TODO
 func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	logger.Debug("Read cert attributes ...")
 
