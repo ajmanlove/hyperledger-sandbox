@@ -1,6 +1,45 @@
+-- login as insurer1
 {
-  "enrollId": "test_user0",
-  "enrollSecret": "MS9qrN8hFjlE"
+  "enrollId": "insurer1",
+  "enrollSecret": "iF6bJY5sWumg"
+}
+
+-- deploy enrollment service
+{
+  "jsonrpc": "2.0",
+  "method": "deploy",
+  "params": {
+    "type": 1,
+    "chaincodeID": {
+      "path": "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/enrollment_service"
+    },
+    "ctorMsg": {
+      "function": "init",
+      "args": []
+    },
+    "secureContext": "insurer1"
+  },
+  "id": 2
+}
+
+-- enroll as insurer1
+{
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+    "type": 1,
+    "chaincodeID": {
+      "name": "b328e33876bcc9a8b624efd86ac4f1a1dddfb3555ef5dfe2e609c918e12f2753a2db33ab3b1c6e52d27e75f6fda954f669128642733e4dd6df628a723692647f"
+    },
+    "ctorMsg": {
+      "function": "enroll",
+      "args": [
+      ]
+    },
+    "secureContext": "insurer1",
+    "attributes": ["id", "contact"]
+  },
+  "id": 3
 }
 
 {

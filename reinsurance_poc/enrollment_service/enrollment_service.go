@@ -58,6 +58,20 @@ func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function s
 }
 
 func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	id, err := stub.ReadCertAttribute("id")
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to read role attribute")
+	}
+	contact, err := stub.ReadCertAttribute("contact")
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to read contact attribute")
+	}
+
+	logger.Debugf("ID is [ %v ]", id)
+	logger.Debug("CONTACT is [ %v ]", contact)
+
 	return nil, errors.New("enroll() not implemented")
 }
 // ============================================================================================================================
