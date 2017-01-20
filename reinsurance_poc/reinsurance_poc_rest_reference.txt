@@ -26,17 +26,37 @@
   "params": {
     "type": 1,
     "chaincodeID": {
-      "name": "e04d916d62ea2c9f9ff48fa12e9e2a74747f1e41b1e1034b631c765701da1bce3468164f60d8547421c5ec924b3b13aab1f530f16d14abaeed6bc9d88308a6e5"
+      "name": "c3957cbddf64d9fbdcfa29f14ea7b22396bb848fcf3efbb1ba26d4c390c42d595812e3e3559979e49d766b023d900a0bd65216a4aa84109b812a0ade8bbf6957"
     },
     "ctorMsg": {
       "function": "submit_request",
       "args": [
       	"liability", "facultative", "railroad", "100000000", "100000000",
         "2e1b1b0cb7bfce4cf47706752a234f29", "http://mybucket.s3-website-us-east-1.amazonaws.com/",
-        "50000000", "open", "myusername"
+        "50000000", "open", "myusername", "someone,someonelse"
       ]
     },
     "secureContext": "test_user0"
   },
   "id": 2
+}
+
+
+{
+  "jsonrpc": "2.0",
+  "method": "query",
+  "params": {
+    "type": 1,
+    "chaincodeID": {
+      "name": "e07ba568aa72daeb7d941d123795bf37bcdde87f380da5d65d0c00dfa4b1cdfb98762edaa9cfaf331286a91621c5e978efd77fb7a79508228b3c8d18ed42b331"
+    },
+    "ctorMsg": {
+      "function": "get_request",
+      "args": [
+        "1"
+      ]
+    },
+    "secureContext": "test_user0"
+  },
+  "id": 3
 }

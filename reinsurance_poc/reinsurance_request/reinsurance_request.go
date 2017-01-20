@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -102,7 +103,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		InExcessOf : ieo, //50000000,
 		Status : "open",
 		Requestor	: args[8], //"myusername", // TODO
-		Requestees	: []string {"someone", "someoneelse"},
+		Requestees	: strings.Split(args[9], ","), //[]string {"someone", "someoneelse"},
 	}
 
 	bytes, err := json.Marshal(rr)
