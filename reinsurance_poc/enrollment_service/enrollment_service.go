@@ -70,7 +70,7 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, function 
 	}
 
 	logger.Debugf("ID is [ %v ]", id)
-	logger.Debug("CONTACT is [ %v ]", contact)
+	logger.Debugf("CONTACT is [ %v ]", contact)
 
 	return nil, errors.New("enroll() not implemented")
 }
