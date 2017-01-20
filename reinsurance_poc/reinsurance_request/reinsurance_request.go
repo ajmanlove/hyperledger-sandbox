@@ -30,15 +30,15 @@ type ReinsuranceRequest struct {
 	Requestees						[]string 	`json:"requestees"`
 }
 
-type RequestEvent {
+type RequestEvent struct {
 	RequestId 						string 			`json:"requestId"`
 	RequestorId						string			`json:"requestorId"`
 	Recipients						[]Recipient	`json:"recipients"`
 }
 
-type Recipient {
-	RecipientId: 					string	`json:"recipientId"`
-	ReciepientContact			string	`json:"recipientContact"`
+type Recipient struct {
+	RecipientId 					string	`json:"recipientId"`
+	RecipientContact			string	`json:"recipientContact"`
 }
 
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -138,23 +138,22 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 	for i := 0; i < len(requestees); i++ {
 		recipientId := requestees[i]
 		recipientContact := "foo"
-		recipient := Recipient{
-			RecipientId: recipientId
-			ReciepientContact: recipientContact
+		recipient := Recipient {
+			RecipientId: recipientId,
+			RecipientContact: recipientContact,
 		}
 
-		append(recipients, recipient)
+		recipients = append(recipients, recipient)
   }
 
 	event := RequestEvent {
 		RequestId: id,
 		RequestorId: requestor,
-		RecipientId: requestees[i]
-		ReciepientContact: recipients}
+		Recipients: recipients}
 
 	logger.Debugf("Sending event [ %s ]", event)
-	
-	bytes, err := json.Marshal(rr)
+
+	bytes, err = json.Marshal(event)
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to serialize RequestEvent object")
