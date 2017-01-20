@@ -10,6 +10,7 @@ import (
 )
 
 var logger = shim.NewLogger("EnrollmentServiceCC")
+var enrollmentTable = "Enrollment"
 
 type EnrollmentServiceCC struct {
 }
@@ -26,7 +27,7 @@ func (t *EnrollmentServiceCC) Init(stub shim.ChaincodeStubInterface, function st
 	}
 
 	// Create enrollment table
-	err := stub.CreateTable("Enrollment", []*shim.ColumnDefinition{
+	err := stub.CreateTable(enrollmentTable, []*shim.ColumnDefinition{
 		&shim.ColumnDefinition{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
 		&shim.ColumnDefinition{Name: "Enrollee", Type: shim.ColumnDefinition_BYTES, Key: false},
 	})
@@ -81,6 +82,18 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []st
 	}
 	logger.Debugf("Caller CONTACT is [ %v ]", CallerContact)
 
+	id := string(callerId)
+
+	ok, err := stub.InsertRow(enrollmentTable, shim.Row{
+		Columns: []*shim.Column{
+			&shim.Column{Value: &shim.Column_String_{String_: id}},
+			&shim.Column{Value: &shim.Column_Bytes{Bytes: callerCert}}},
+	})
+
+	if !ok && err == nil {
+		fmt.Println("Error inserting row")
+		return nil, errors.New("Id was already enrolled " + id)
+	}
 
 	return nil, nil
 }
