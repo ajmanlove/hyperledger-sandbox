@@ -77,16 +77,16 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 }
 
 func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	tiv, err := strconv.Atoi(args[4])
+	tiv, err := strconv.Atoi(args[3])
 	if err != nil {
 		// do error
 	}
-	agg_lim, err := strconv.Atoi(args[5])
+	agg_lim, err := strconv.Atoi(args[4])
 	if err != nil {
 		// do error
 	}
 
-	ieo, err := strconv.Atoi(args[8])
+	ieo, err := strconv.Atoi(args[7])
 	if err != nil {
 		// do error
 	}
@@ -97,11 +97,11 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		AssetType	: args[2], //"railroad",
 		TotalInsuredValue : tiv, //100000000,
 		AggregateLimit : agg_lim, //100000000,
-		PortfolioHash	: args[6], //"2e1b1b0cb7bfce4cf47706752a234f29",
-		PortfolioURL : args[7], //"http://mybucket.s3-website-us-east-1.amazonaws.com/",
+		PortfolioHash	: args[5], //"2e1b1b0cb7bfce4cf47706752a234f29",
+		PortfolioURL : args[6], //"http://mybucket.s3-website-us-east-1.amazonaws.com/",
 		InExcessOf : ieo, //50000000,
 		Status : "open",
-		Requestor	: args[9], //"myusername", // TODO
+		Requestor	: args[8], //"myusername", // TODO
 		Requestees	: []string {"someone", "someoneelse"},
 	}
 
