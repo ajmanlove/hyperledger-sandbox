@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 )
 
 var logger = shim.NewLogger("ReinsuranceRequestCC")
@@ -30,16 +31,16 @@ type ReinsuranceRequest struct {
 	Requestees						[]string 	`json:"requestees"`
 }
 
-type RequestEvent struct {
-	RequestId 						string 			`json:"requestId"`
-	RequestorId						string			`json:"requestorId"`
-	Recipients						[]Recipient	`json:"recipients"`
-}
-
-type Recipient struct {
-	RecipientId 					string	`json:"recipientId"`
-	RecipientContact			string	`json:"recipientContact"`
-}
+// type RequestEvent struct {
+// 	RequestId 						string 			`json:"requestId"`
+// 	RequestorId						string			`json:"requestorId"`
+// 	Recipients						[]Recipient	`json:"recipients"`
+// }
+//
+// type Recipient struct {
+// 	RecipientId 					string	`json:"recipientId"`
+// 	RecipientContact			string	`json:"recipientContact"`
+// }
 
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")

@@ -6,7 +6,7 @@ membersrvc:
       - MEMBERSRVC_CA_ACA_ENABLED=true
    command: membersrvc
 vp0:
-   image: hyperledger/fabric-peer
+   image: upshift/poc-fabric-peer
    ports:
      - "7050:7050"
      - "7051:7051"
