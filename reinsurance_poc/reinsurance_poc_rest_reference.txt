@@ -42,6 +42,27 @@
   "id": 3
 }
 
+-- query insurer1 contact
+{
+  "jsonrpc": "2.0",
+  "method": "query",
+  "params": {
+    "type": 1,
+    "chaincodeID": {
+      "name": "b328e33876bcc9a8b624efd86ac4f1a1dddfb3555ef5dfe2e609c918e12f2753a2db33ab3b1c6e52d27e75f6fda954f669128642733e4dd6df628a723692647f"
+    },
+    "ctorMsg": {
+      "function": "get_contact",
+      "args": [
+        "insurer1"
+      ]
+    },
+    "secureContext": "insurer1",
+    "attributes": ["id", "contact"]
+  },
+  "id": 3
+}
+
 {
   "jsonrpc": "2.0",
   "method": "deploy",

@@ -61,11 +61,10 @@ func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function 
 func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	switch function {
 		case "get_contact":
-			t.get_contact(stub, args)
+			return t.get_contact(stub, args)
 		default:
 			return nil, errors.New("Unrecognized function : " + function)
 	}
-	return nil, errors.New("No Query Implementation")
 }
 
 func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
