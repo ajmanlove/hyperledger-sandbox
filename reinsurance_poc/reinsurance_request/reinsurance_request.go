@@ -103,8 +103,14 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		// do error
 	}
 
-	requestees := strings.Split(args[9], ",")
-	requestor := args[8] // TODO get from cert
+	bytes, err := stub.ReadCertAttribute("enrollmentId")
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("failed to get enrollmentId attribute")
+	}
+	requestor := string(bytes)
+	requestees := strings.Split(args[8], ",")
+
 	rr := ReinsuranceRequest {
 		ContractType : args[0], //"liability",
 		ContractSubType	: args[1], //"facultative",
@@ -115,11 +121,11 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		PortfolioURL : args[6], //"http://mybucket.s3-website-us-east-1.amazonaws.com/",
 		InExcessOf : ieo, //50000000,
 		Status : "open",
-		Requestor	: args[8], //"myusername", // TODO
+		Requestor	: requestor, //"myusername", // TODO
 		Requestees	: requestees, //[]string {"someone", "someoneelse"},
 	}
 
-	bytes, err := json.Marshal(rr)
+	bytes, err = json.Marshal(rr)
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to serialize ReinsuranceRequest object")
@@ -151,9 +157,9 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		RequestorId: requestor,
 		Recipients: recipients}
 
-	logger.Debugf("Sending event [ %s ]", event)
-
 	bytes, err = json.Marshal(event)
+	logger.Debugf("Sending event [ %s ]", bytes)
+
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to serialize RequestEvent object")
