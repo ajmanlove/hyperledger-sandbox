@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"encoding/base64"
 	// "encoding/json"
 	// "strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim/crypto/attr"
@@ -73,9 +74,15 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []st
 		logger.Error(err)
 		return nil, errors.New("Failed to read contact attribute")
 	}
-		logger.Debugf("CONTACT is [ %v ]", contact)
+	logger.Debugf("CONTACT is [ %v ]", contact)
 
-	c2, err := attr.GetValueFrom("contact", id)
+	encid, err := base64.StdEncoding.DecodeString(string(id))
+	if err != nil {
+		logger.Error(err)
+		return nil, fmt.Errorf("Failed encoding id. Error was [%v]", err)
+	}
+
+	c2, err := attr.GetValueFrom("contact", encid)
 	if err != nil {
 		fmt.Errorf("Error reading contact [%v] \n", err)
 		return nil, fmt.Errorf("Failed fetching recipient contact. Error was [%v]", err)
