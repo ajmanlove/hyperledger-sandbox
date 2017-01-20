@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"encoding/json"
-	// "strconv"
+	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -16,17 +16,17 @@ type ReinsuranceRequestCC struct {
 
 // TBD
 type ReinsuranceRequest struct {
-	ContractType					string `json:"contractType"`
-	ContractSubType				string `json:"contractSubType"`
-	AssetType							string `json:"assetType"`
-	TotalInsuredValue 		int 	 `json:"totalInsuredValue,string"`
-	AggregateLimit				int 	 `json:"aggregateLimit,string"`
-	PortfolioHash					string `json:"portfolioHash"`
-	PortfolioURL					string `json:"portfolioUrl"`
-	InExcessOf						int		 `json:"inExcessOf,string"`
-	Status								string `json:"status"`
-	Requestor							string `json:"requestor"`
-	Requestees						[]string `json:"requestees"`
+	ContractType					string 		`json:"contractType"`
+	ContractSubType				string 		`json:"contractSubType"`
+	AssetType							string 		`json:"assetType"`
+	TotalInsuredValue 		int 	 		`json:"totalInsuredValue,string"`
+	AggregateLimit				int 	 		`json:"aggregateLimit,string"`
+	PortfolioHash					string 		`json:"portfolioHash"`
+	PortfolioURL					string 		`json:"portfolioUrl"`
+	InExcessOf						int		 		`json:"inExcessOf,string"`
+	Status								string 		`json:"status"`
+	Requestor							string 		`json:"requestor"`
+	Requestees						[]string 	`json:"requestees"`
 }
 
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -77,17 +77,31 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 }
 
 func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	tiv, err := strconv.Atoi(args[4])
+	if err != nil {
+		// do error
+	}
+	agg_lim, err := strconv.Atoi(args[5])
+	if err != nil {
+		// do error
+	}
+
+	ieo, err := strconv.Atoi(args[8])
+	if err != nil {
+		// do error
+	}
+
 	rr := ReinsuranceRequest {
-		ContractType : "liability",
-		ContractSubType	: "facultative",
-		AssetType	: "railroad",
-		TotalInsuredValue : 100000000,
-		AggregateLimit : 100000000,
-		PortfolioHash	: "2e1b1b0cb7bfce4cf47706752a234f29",
-		PortfolioURL : "http://mybucket.s3-website-us-east-1.amazonaws.com/",
-		InExcessOf : 50000000,
+		ContractType : args[0], //"liability",
+		ContractSubType	: args[1], //"facultative",
+		AssetType	: args[2], //"railroad",
+		TotalInsuredValue : tiv, //100000000,
+		AggregateLimit : agg_lim, //100000000,
+		PortfolioHash	: args[6], //"2e1b1b0cb7bfce4cf47706752a234f29",
+		PortfolioURL : args[7], //"http://mybucket.s3-website-us-east-1.amazonaws.com/",
+		InExcessOf : ieo, //50000000,
 		Status : "open",
-		Requestor	: "myusername",
+		Requestor	: args[9], //"myusername", // TODO
 		Requestees	: []string {"someone", "someoneelse"},
 	}
 

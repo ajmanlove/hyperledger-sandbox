@@ -1,0 +1,42 @@
+{
+  "enrollId": "test_user0",
+  "enrollSecret": "MS9qrN8hFjlE"
+}
+
+{
+  "jsonrpc": "2.0",
+  "method": "deploy",
+  "params": {
+    "type": 1,
+    "chaincodeID": {
+      "path": "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/reinsurance_request"
+    },
+    "ctorMsg": {
+      "function": "init",
+      "args": []
+    },
+    "secureContext": "test_user0"
+  },
+  "id": 1
+}
+
+{
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+    "type": 1,
+    "chaincodeID": {
+      "name": "e04d916d62ea2c9f9ff48fa12e9e2a74747f1e41b1e1034b631c765701da1bce3468164f60d8547421c5ec924b3b13aab1f530f16d14abaeed6bc9d88308a6e5"
+    },
+    "ctorMsg": {
+      "function": "submit_request",
+      "args": [
+      	"liability", "facultative", "railroad", "100000000", "100000000",
+        "2e1b1b0cb7bfce4cf47706752a234f29", "http://mybucket.s3-website-us-east-1.amazonaws.com/",
+        "50000000", "open", "myusername"
+      ]
+    },
+    "secureContext": "test_user0"
+  },
+  "id": 2
+}
