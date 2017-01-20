@@ -3,10 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"encoding/base64"
 	// "encoding/json"
 	// "strconv"
-	"github.com/hyperledger/fabric/core/chaincode/shim/crypto/attr"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -62,33 +60,27 @@ func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function s
 func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	logger.Debug("Read cert attributes ...")
 
-	id, err := stub.ReadCertAttribute("id")
+	callerCert, err := stub.GetCallerCertificate()
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to get caller cert")
+	}
+	logger.Debugf("Caller CERT is [ %v ]", callerCert)
+
+	callerId, err := stub.ReadCertAttribute("id")
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to read role attribute")
 	}
-	logger.Debugf("ID is [ %v ]", id)
+	logger.Debugf("caller ID is [ %v ]", callerId)
 
-	contact, err := stub.ReadCertAttribute("contact")
+	CallerContact, err := stub.ReadCertAttribute("contact")
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to read contact attribute")
 	}
-	logger.Debugf("CONTACT is [ %v ]", contact)
+	logger.Debugf("Caller CONTACT is [ %v ]", CallerContact)
 
-	encid, err := base64.StdEncoding.DecodeString(string(id))
-	if err != nil {
-		logger.Error(err)
-		return nil, fmt.Errorf("Failed encoding id. Error was [%v]", err)
-	}
-
-	c2, err := attr.GetValueFrom("contact", encid)
-	if err != nil {
-		fmt.Errorf("Error reading contact [%v] \n", err)
-		return nil, fmt.Errorf("Failed fetching recipient contact. Error was [%v]", err)
-	}
-
-	logger.Debugf("CONTACT2 is [ %v ]", c2)
 
 	return nil, nil
 }
