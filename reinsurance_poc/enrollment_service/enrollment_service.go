@@ -19,17 +19,36 @@ type EnrollmentService struct {
 }
 
 func (t *EnrollmentServiceCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	logger.Debug("Init()")
+	logger.Debug("Init Chaincode...")
+
 	if len(args) != 0 {
 		return nil, errors.New("Init does not support arguments")
 	}
+
+	// Create enrollment table
+	err := stub.CreateTable("Enrollment", []*shim.ColumnDefinition{
+		&shim.ColumnDefinition{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
+		&shim.ColumnDefinition{Name: "Enrollee", Type: shim.ColumnDefinition_BYTES, Key: false},
+	})
+
+	if err != nil {
+		return nil, errors.New("Failed creating Enrollment table.")
+	}
+
+	logger.Debug("Init Chaincode finished")
+
 	return nil, nil
 }
 
 func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	logger.Debug("enter Invoke")
-	return nil, errors.New("No Invoke Implementation")
+	switch function {
+		case "enroll":
+			return nil, errors.New("enroll not implemented")
+		default:
+			return nil, errors.New("Unrecognized Invoke function: " + function)
+	}
 
 }
 
@@ -38,6 +57,9 @@ func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function s
 	return nil, errors.New("No Query Implementation")
 }
 
+func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	return nil, errors.New("enroll() not implemented")
+}
 // ============================================================================================================================
 // Main
 // ============================================================================================================================
