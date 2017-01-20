@@ -201,9 +201,9 @@ aca:
               attribute-entry-10: bob;bank_a;account;23456-67890;2015-02-02T00:00:00-03:00;;
               attribute-entry-11: assigner;bank_a;role;assigner;2015-01-01T00:00:00-03:00;;
 
-              attribute-entry-12: insurer1;insurer_a;id;insurer1;2016-01-01T00:00:00-03:00;;
+              attribute-entry-12: insurer1;insurer_a;enrollmentId;insurer1;2016-01-01T00:00:00-03:00;;
               attribute-entry-13: insurer1;insurer_a;contact;andrew.manlove@codefutures.com;2016-01-01T00:00:00-03:00;;
-              attribute-entry-14: reinsurer1;reinsurer_a;id;reinsurer1;2016-01-01T00:00:00-03:00;;
+              attribute-entry-14: reinsurer1;reinsurer_a;enrollmentId;reinsurer1;2016-01-01T00:00:00-03:00;;
               attribute-entry-15: reinsurer1;reinsurer_a;contact;andrew.manlove@agildata.com;2016-01-01T00:00:00-03:00;;
 
 

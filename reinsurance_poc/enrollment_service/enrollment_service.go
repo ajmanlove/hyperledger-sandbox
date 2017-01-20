@@ -30,7 +30,7 @@ func (t *EnrollmentServiceCC) Init(stub shim.ChaincodeStubInterface, function st
 
 	// Create enrollment table
 	err := stub.CreateTable(enrollmentTable, []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
+		&shim.ColumnDefinition{Name: "enrollmentId", Type: shim.ColumnDefinition_STRING, Key: true},
 		&shim.ColumnDefinition{Name: "Enrollee", Type: shim.ColumnDefinition_BYTES, Key: false},
 	})
 
@@ -72,12 +72,12 @@ func (t *EnrollmentServiceCC) enroll_0(stub shim.ChaincodeStubInterface, args []
 	}
 	logger.Debugf("Caller CERT is [ %v ]", callerCert)
 
-	id, err := attr.GetValueFrom("id", callerCert)
+	id, err := attr.GetValueFrom("enrollmentId", callerCert)
 	if err != nil {
-		logger.Errorf("Failed to get id from cert. error is [ %v ]", err)
-		return nil, errors.New("Failed to get id from cert")
+		logger.Errorf("Failed to get enrollmentId from cert. error is [ %v ]", err)
+		return nil, errors.New("Failed to get enrollmentId from cert")
 	}
-	logger.Debugf("Caller ID is [ %v ]", id)
+	logger.Debugf("Caller enrollmentId is [ %v ]", id)
 
 	contact, err := attr.GetValueFrom("contact", callerCert)
 	if err != nil {
@@ -100,12 +100,12 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []st
 	}
 	logger.Debugf("Caller CERT is [ %v ]", callerCert)
 
-	callerId, err := stub.ReadCertAttribute("id")
+	callerId, err := stub.ReadCertAttribute("enrollmentId")
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to read role attribute")
 	}
-	logger.Debugf("caller ID is [ %v ]", callerId)
+	logger.Debugf("caller enrollmentId is [ %v ]", callerId)
 
 	CallerContact, err := stub.ReadCertAttribute("contact")
 	if err != nil {
@@ -124,7 +124,7 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []st
 
 	if !ok && err == nil {
 		fmt.Println("Error inserting row")
-		return nil, errors.New("Id was already enrolled " + id)
+		return nil, errors.New("enrollmentId was already enrolled " + id)
 	}
 
 	return nil, nil
