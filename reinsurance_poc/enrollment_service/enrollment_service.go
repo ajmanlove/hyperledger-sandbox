@@ -69,10 +69,11 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, function 
 		return nil, errors.New("Failed to read contact attribute")
 	}
 
+	logger.Debug("Read cert attributes ...")
 	logger.Debugf("ID is [ %v ]", id)
 	logger.Debugf("CONTACT is [ %v ]", contact)
 
-	return nil, errors.New("enroll() not implemented")
+	return nil, nil
 }
 // ============================================================================================================================
 // Main
