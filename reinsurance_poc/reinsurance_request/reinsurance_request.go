@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 )
 
 var logger = shim.NewLogger("ReinsuranceRequestCC")
@@ -30,16 +31,16 @@ type ReinsuranceRequest struct {
 	Requestees						[]string 	`json:"requestees"`
 }
 
-type RequestEvent struct {
-	RequestId 						string 			`json:"requestId"`
-	RequestorId						string			`json:"requestorId"`
-	Recipients						[]Recipient	`json:"recipients"`
-}
-
-type Recipient struct {
-	RecipientId 					string	`json:"recipientId"`
-	RecipientContact			string	`json:"recipientContact"`
-}
+// type RequestEvent struct {
+// 	RequestId 						string 			`json:"requestId"`
+// 	RequestorId						string			`json:"requestorId"`
+// 	Recipients						[]Recipient	`json:"recipients"`
+// }
+//
+// type Recipient struct {
+// 	RecipientId 					string	`json:"recipientId"`
+// 	RecipientContact			string	`json:"recipientContact"`
+// }
 
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
@@ -139,12 +140,12 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		return nil, errors.New("Failed to put request")
 	}
 
-	var recipients []Recipient
+	var recipients []common.Recipient
 
 	for i := 0; i < len(requestees); i++ {
 		recipientId := requestees[i]
 		recipientContact := "foo"
-		recipient := Recipient {
+		recipient := common.Recipient {
 			RecipientId: recipientId,
 			RecipientContact: recipientContact,
 		}
@@ -152,7 +153,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		recipients = append(recipients, recipient)
   }
 
-	event := RequestEvent {
+	event := common.RequestEvent {
 		RequestId: id,
 		RequestorId: requestor,
 		Recipients: recipients}
