@@ -30,6 +30,17 @@ type ReinsuranceRequest struct {
 	Requestees						[]string 	`json:"requestees"`
 }
 
+type RequestEvent {
+	RequestId 						string 			`json:"requestId"`
+	RequestorId						string			`json:"requestorId"`
+	Recipients						[]Recipient	`json:"recipients"`
+}
+
+type Recipient {
+	RecipientId: 					string	`json:"recipientId"`
+	ReciepientContact			string	`json:"recipientContact"`
+}
+
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
 
@@ -92,6 +103,8 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		// do error
 	}
 
+	requestees := strings.Split(args[9], ",")
+	requestor := args[8] // TODO get from cert
 	rr := ReinsuranceRequest {
 		ContractType : args[0], //"liability",
 		ContractSubType	: args[1], //"facultative",
@@ -103,7 +116,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		InExcessOf : ieo, //50000000,
 		Status : "open",
 		Requestor	: args[8], //"myusername", // TODO
-		Requestees	: strings.Split(args[9], ","), //[]string {"someone", "someoneelse"},
+		Requestees	: requestees, //[]string {"someone", "someoneelse"},
 	}
 
 	bytes, err := json.Marshal(rr)
@@ -119,6 +132,41 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 		logger.Error("err")
 		return nil, errors.New("Failed to put request")
 	}
+
+	var recipients []Recipient
+
+	for i := 0; i < len(requestees); i++ {
+		recipientId := requestees[i]
+		recipientContact := "foo"
+		recipient := Recipient{
+			RecipientId: recipientId
+			ReciepientContact: recipientContact
+		}
+
+		append(recipients, recipient)
+  }
+
+	event := RequestEvent {
+		RequestId: id,
+		RequestorId: requestor,
+		RecipientId: requestees[i]
+		ReciepientContact: recipients}
+
+	logger.Debugf("Sending event [ %s ]", event)
+	
+	bytes, err := json.Marshal(rr)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to serialize RequestEvent object")
+	}
+
+	err = stub.SetEvent("reinsurance_request_event", []byte(bytes))
+
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to set event, id : " + id)
+	}
+
 	return nil, nil
 }
 
