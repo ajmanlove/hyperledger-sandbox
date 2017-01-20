@@ -203,7 +203,7 @@ aca:
 
               attribute-entry-12: insurer1;insurer_a;id;insurer1;2016-01-01T00:00:00-03:00;;
               attribute-entry-13: insurer1;insurer_a;contact;andrew.manlove@codefutures.com;2016-01-01T00:00:00-03:00;;
-              attribute-entry-14: reinsurer1;reinsurer_a;id;reinsurer1;contact;2016-01-01T00:00:00-03:00;;
+              attribute-entry-14: reinsurer1;reinsurer_a;id;reinsurer1;2016-01-01T00:00:00-03:00;;
               attribute-entry-15: reinsurer1;reinsurer_a;contact;andrew.manlove@agildata.com;2016-01-01T00:00:00-03:00;;
 
 
