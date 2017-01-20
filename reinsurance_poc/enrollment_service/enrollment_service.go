@@ -5,6 +5,7 @@ import (
 	"fmt"
 	// "encoding/json"
 	// "strconv"
+	"github.com/hyperledger/fabric/core/chaincode/shim/crypto/attr"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -72,9 +73,15 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []st
 		logger.Error(err)
 		return nil, errors.New("Failed to read contact attribute")
 	}
+		logger.Debugf("CONTACT is [ %v ]", contact)
 
+	c2, err := attr.GetValueFrom("contact", id)
+	if err != nil {
+		fmt.Errorf("Error reading contact [%v] \n", err)
+		return nil, fmt.Errorf("Failed fetching recipient contact. Error was [%v]", err)
+	}
 
-	logger.Debugf("CONTACT is [ %v ]", contact)
+	logger.Debugf("CONTACT2 is [ %v ]", c2)
 
 	return nil, nil
 }
