@@ -14,12 +14,15 @@ import (
 var logger = shim.NewLogger("EnrollmentServiceCC")
 var enrollmentTable = "Enrollment"
 
+// Enrolls contact information for users
 type EnrollmentServiceCC struct {
 }
 
-// TBD
-type EnrollmentService struct {
-}
+// // TBD
+// type EnrollmentRecord struct {
+// 	enrollmentId 	string,
+// 	contact				string
+// }
 
 func (t *EnrollmentServiceCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init Chaincode...")
@@ -47,8 +50,8 @@ func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function 
 
 	logger.Debug("enter Invoke")
 	switch function {
-		case "enroll":
-			return t.enroll(stub, args)
+		// case "enroll":
+		// 	return t.enroll(stub, args)
 		case "enroll0":
 			return t.enroll_0(stub, args)
 		default:
@@ -72,54 +75,26 @@ func (t *EnrollmentServiceCC) enroll_0(stub shim.ChaincodeStubInterface, args []
 	}
 	logger.Debugf("Caller CERT is [ %v ]", callerCert)
 
-	id, err := attr.GetValueFrom("enrollmentId", callerCert)
+	bytes, err := attr.GetValueFrom("enrollmentId", callerCert)
 	if err != nil {
 		logger.Errorf("Failed to get enrollmentId from cert. error is [ %v ]", err)
 		return nil, errors.New("Failed to get enrollmentId from cert")
 	}
+	id := string(bytes)
 	logger.Debugf("Caller enrollmentId is [ %v ]", id)
 
-	contact, err := attr.GetValueFrom("contact", callerCert)
+	bytes, err = attr.GetValueFrom("contact", callerCert)
 	if err != nil {
 		logger.Errorf("Failed to get contact from cert. error is [ %v ]", err)
 		return nil, errors.New("Failed to get contact from cert")
 	}
+	contact := string(bytes)
 	logger.Debugf("Caller CONTACT is [ %v ]", contact)
-
-	return nil, nil
-}
-
-// TODO
-func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	logger.Debug("Read cert attributes ...")
-
-	callerCert, err := stub.GetCallerCertificate()
-	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to get caller cert")
-	}
-	logger.Debugf("Caller CERT is [ %v ]", callerCert)
-
-	callerId, err := stub.ReadCertAttribute("enrollmentId")
-	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to read role attribute")
-	}
-	logger.Debugf("caller enrollmentId is [ %v ]", callerId)
-
-	CallerContact, err := stub.ReadCertAttribute("contact")
-	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to read contact attribute")
-	}
-	logger.Debugf("Caller CONTACT is [ %v ]", CallerContact)
-
-	id := string(callerId)
 
 	ok, err := stub.InsertRow(enrollmentTable, shim.Row{
 		Columns: []*shim.Column{
 			&shim.Column{Value: &shim.Column_String_{String_: id}},
-			&shim.Column{Value: &shim.Column_Bytes{Bytes: callerCert}}},
+			&shim.Column{Value: &shim.Column_Bytes{Bytes: []byte(contact)}}},
 	})
 
 	if !ok && err == nil {
@@ -128,7 +103,51 @@ func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []st
 	}
 
 	return nil, nil
+
+	return nil, nil
 }
+
+// TODO keeping this code around
+// func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+// 	logger.Debug("Read cert attributes ...")
+//
+// 	callerCert, err := stub.GetCallerCertificate()
+// 	if err != nil {
+// 		logger.Error(err)
+// 		return nil, errors.New("Failed to get caller cert")
+// 	}
+// 	logger.Debugf("Caller CERT is [ %v ]", callerCert)
+//
+// 	callerId, err := stub.ReadCertAttribute("enrollmentId")
+// 	if err != nil {
+// 		logger.Error(err)
+// 		return nil, errors.New("Failed to read role attribute")
+// 	}
+// 	logger.Debugf("caller enrollmentId is [ %v ]", callerId)
+//
+// 	CallerContact, err := stub.ReadCertAttribute("contact")
+// 	if err != nil {
+// 		logger.Error(err)
+// 		return nil, errors.New("Failed to read contact attribute")
+// 	}
+// 	logger.Debugf("Caller CONTACT is [ %v ]", CallerContact)
+//
+// 	id := string(callerId)
+//
+// 	ok, err := stub.InsertRow(enrollmentTable, shim.Row{
+// 		Columns: []*shim.Column{
+// 			&shim.Column{Value: &shim.Column_String_{String_: id}},
+// 			&shim.Column{Value: &shim.Column_Bytes{Bytes: callerCert}}},
+// 	})
+//
+// 	if !ok && err == nil {
+// 		fmt.Println("Error inserting row")
+// 		return nil, errors.New("enrollmentId was already enrolled " + id)
+// 	}
+//
+// 	return nil, nil
+// }
+
 // ============================================================================================================================
 // Main
 // ============================================================================================================================
