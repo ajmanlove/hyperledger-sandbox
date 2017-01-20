@@ -45,7 +45,7 @@ func (t *EnrollmentServiceCC) Invoke(stub shim.ChaincodeStubInterface, function 
 	logger.Debug("enter Invoke")
 	switch function {
 		case "enroll":
-			return nil, errors.New("enroll not implemented")
+			return t.enroll(stub, args)
 		default:
 			return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
@@ -57,7 +57,7 @@ func (t *EnrollmentServiceCC) Query(stub shim.ChaincodeStubInterface, function s
 	return nil, errors.New("No Query Implementation")
 }
 
-func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *EnrollmentServiceCC) enroll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	id, err := stub.ReadCertAttribute("id")
 	if err != nil {
 		logger.Error(err)
