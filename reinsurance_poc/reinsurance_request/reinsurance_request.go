@@ -136,7 +136,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 
 	var recipients []common.Recipient
 
-	t.get_contact(stub, "foo")
+	t.get_contact(stub, requestor)
 
 	for i := 0; i < len(requestees); i++ {
 		recipientId := requestees[i]
