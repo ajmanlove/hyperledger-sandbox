@@ -3,6 +3,7 @@ package common
 type RequestEvent struct {
 	RequestId 						string 			`json:"requestId"`
 	RequestorId						string			`json:"requestorId"`
+	RequestorContact			string			`json:"requestorContact"`
 	Recipients						[]Recipient	`json:"recipients"`
 }
 

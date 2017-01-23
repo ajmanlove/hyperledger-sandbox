@@ -31,17 +31,6 @@ type ReinsuranceRequest struct {
 	Requestees						[]string 	`json:"requestees"`
 }
 
-// type RequestEvent struct {
-// 	RequestId 						string 			`json:"requestId"`
-// 	RequestorId						string			`json:"requestorId"`
-// 	Recipients						[]Recipient	`json:"recipients"`
-// }
-//
-// type Recipient struct {
-// 	RecipientId 					string	`json:"recipientId"`
-// 	RecipientContact			string	`json:"recipientContact"`
-// }
-
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
 
@@ -144,7 +133,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 
 	for i := 0; i < len(requestees); i++ {
 		recipientId := requestees[i]
-		recipientContact := "foo"
+		recipientContact := "requestee@gmail.com" // TODO
 		recipient := common.Recipient {
 			RecipientId: recipientId,
 			RecipientContact: recipientContact,
@@ -156,6 +145,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 	event := common.RequestEvent {
 		RequestId: id,
 		RequestorId: requestor,
+		RequestorContact: "requestor@gmail.com", // TODO
 		Recipients: recipients}
 
 	bytes, err = json.Marshal(event)
