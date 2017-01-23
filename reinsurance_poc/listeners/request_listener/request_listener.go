@@ -7,6 +7,12 @@ import (
 
 	"github.com/hyperledger/fabric/events/consumer"
 	pb "github.com/hyperledger/fabric/protos"
+
+	"encoding/json"
+
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
+
+	"net/smtp"
 )
 
 type adapter struct {
@@ -77,9 +83,14 @@ func main() {
 	var eventAddress string
 	var listenToRejections bool
 	var chaincodeID string
+	var senderEmail string
+	var senderPass string
 	flag.StringVar(&eventAddress, "events-address", "0.0.0.0:7053", "address of events server")
 	flag.BoolVar(&listenToRejections, "listen-to-rejections", false, "whether to listen to rejection events")
 	flag.StringVar(&chaincodeID, "events-from-chaincode", "", "listen to events from given chaincode")
+	flag.StringVar(&senderEmail, "sender-email", "", "email address of the smtp sender")
+	flag.StringVar(&senderPass, "sender-password", "", "email password of the smtp sender")
+
 	flag.Parse()
 
 	fmt.Printf("Event Address: %s\n", eventAddress)
@@ -89,6 +100,14 @@ func main() {
 		fmt.Printf("Error creating event client\n")
 		return
 	}
+
+	//Set up authentication information.
+  auth := smtp.PlainAuth(
+      "",
+      senderEmail,
+      senderPass,
+      "smtp.gmail.com",
+  )
 
 	for {
 		select {
@@ -112,6 +131,34 @@ func main() {
 			fmt.Printf("Received chaincode event\n")
 			fmt.Printf("------------------------\n")
 			fmt.Printf("Chaincode Event:%v\n", ce)
+
+			eventName := string(ce.ChaincodeEvent.EventName)
+			switch eventName {
+				case "reinsurance_request_event":
+					fmt.Printf("GOT event name : %s \n", eventName)
+
+					var rEvent common.RequestEvent
+					err := json.Unmarshal(ce.ChaincodeEvent.Payload, &rEvent)
+					if err != nil {
+						fmt.Printf("FAILED to unmarshal payload due to : %s", err)
+					}
+
+
+					err = smtp.SendMail(
+					    "smtp.gmail.com:587",
+					    auth,
+					    rEvent.RequestorContact,
+					    []string{rEvent.Recipients[0].RecipientContact},
+					    []byte("TEST EMAIL!!!"),
+					)
+					if err != nil {
+					    fmt.Printf("FAILED to send email due to : %s", err)
+					}
+
+				default:
+					fmt.Printf("Unrecognized event name : %s \n", eventName)
+			}
+			fmt.Printf("HERE : %v", ce.ChaincodeEvent.Payload)
 		}
 	}
 }
