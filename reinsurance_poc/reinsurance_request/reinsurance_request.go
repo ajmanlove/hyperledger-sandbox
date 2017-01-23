@@ -9,9 +9,11 @@ import (
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
+	//"github.com/hyperledger/fabric/core/util"
 )
 
 var logger = shim.NewLogger("ReinsuranceRequestCC")
+var enrollmentChaincodeId = ""
 
 type ReinsuranceRequestCC struct {
 }
@@ -39,6 +41,9 @@ func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function s
 			if len(args) != 0 {
 				return nil, errors.New("Init does not support arguments")
 			}
+
+			enrollmentChaincodeId = args[0]
+
 			return nil, nil
 		default:
 			return nil, errors.New("Unrecognized init function : " + function)
@@ -166,6 +171,11 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 	return nil, nil
 }
 
+func (t *ReinsuranceRequestCC) get_contact(stub shim.ChaincodeStubInterface, enrollmentId string) ([]byte, error) {
+	// invokeArgs := util.ToChaincodeArgs("query", "a", "b", "10")
+	// response, err := stub.InvokeChaincode(chainCodeToCall, invokeArgs)
+	return nil, nil
+}
 // ============================================================================================================================
 // Main
 // ============================================================================================================================

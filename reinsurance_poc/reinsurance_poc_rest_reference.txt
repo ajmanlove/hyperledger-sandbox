@@ -121,3 +121,6 @@
   },
   "id": 3
 }
+
+
+./request_listener -events-address=localhost:7053 -listen-to-rejections=true --events-from-chaincode="5fb2384d660cc7948d1fc8813657386c8a03a16d4c28e213353a11c40137bb1dcdde1c9fc899950332e2dbc9742fb3ca2e1a4be045b11faed912c80c41b5cbf1"
