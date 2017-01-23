@@ -105,6 +105,11 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 	}
 	requestor := string(bytes)
 	requestees := strings.Split(args[8], ",")
+	bytes, err = t.get_contact(stub, requestor)
+	if err != nil {
+		return nil, err
+	}
+	requestorContact := string(bytes)
 
 	rr := ReinsuranceRequest {
 		ContractType : args[0], //"liability",
@@ -136,11 +141,13 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 
 	var recipients []common.Recipient
 
-	t.get_contact(stub, requestor)
-
 	for i := 0; i < len(requestees); i++ {
 		recipientId := requestees[i]
-		recipientContact := "requestee@gmail.com" // TODO
+		bytes, err = t.get_contact(stub, recipientId)
+		if err != nil {
+			return nil, err
+		}
+		recipientContact := string(bytes)
 		recipient := common.Recipient {
 			RecipientId: recipientId,
 			RecipientContact: recipientContact,
@@ -152,7 +159,7 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 	event := common.RequestEvent {
 		RequestId: id,
 		RequestorId: requestor,
-		RequestorContact: "requestor@gmail.com", // TODO
+		RequestorContact: requestorContact,
 		Recipients: recipients}
 
 	bytes, err = json.Marshal(event)
@@ -174,13 +181,10 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 }
 
 func (t *ReinsuranceRequestCC) get_contact(stub shim.ChaincodeStubInterface, enrollmentId string) ([]byte, error) {
-	// invokeArgs := util.ToChaincodeArgs("query", "a", "b", "10")
-	// response, err := stub.InvokeChaincode(chainCodeToCall, invokeArgs)
 
 	logger.Debug("Enrollment service chaincode id is " + enrollmentChaincodeId)
 
 	invokeArgs := util.ToChaincodeArgs("get_contact", enrollmentId)
-	// ccUrl := "github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/enrollment_service"
 	response, err := stub.QueryChaincode(enrollmentChaincodeId, invokeArgs)
 
 	if err != nil {
@@ -190,7 +194,7 @@ func (t *ReinsuranceRequestCC) get_contact(stub shim.ChaincodeStubInterface, enr
 
 	logger.Debugf("Enrollment service response is %s", string(response))
 
-	return nil, nil
+	return response, nil
 }
 // ============================================================================================================================
 // Main
