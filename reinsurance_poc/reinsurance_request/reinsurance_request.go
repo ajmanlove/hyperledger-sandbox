@@ -38,8 +38,8 @@ func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function s
 
 	switch function {
 		case "init":
-			if len(args) != 0 {
-				return nil, errors.New("Init does not support arguments")
+			if len(args) != 1 {
+				return nil, errors.New("Init requires enrollment_service chaincode id")
 			}
 
 			enrollmentChaincodeId = args[0]
@@ -174,6 +174,8 @@ func (t *ReinsuranceRequestCC) submit_request(stub shim.ChaincodeStubInterface, 
 func (t *ReinsuranceRequestCC) get_contact(stub shim.ChaincodeStubInterface, enrollmentId string) ([]byte, error) {
 	// invokeArgs := util.ToChaincodeArgs("query", "a", "b", "10")
 	// response, err := stub.InvokeChaincode(chainCodeToCall, invokeArgs)
+
+	logger.Debug("Enrollment service chaincode id is " + enrollmentChaincodeId)
 	return nil, nil
 }
 // ============================================================================================================================

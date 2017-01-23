@@ -73,7 +73,9 @@
     },
     "ctorMsg": {
       "function": "init",
-      "args": []
+      "args": [
+        "b0e3d96b2448278636e42ee77b2db7783838f50a7c4d6d92a51e523b7b6edb7302ab32ff74309ad886db2d8d5fb73453750d1e47b240443b538fb1372fa5a25e"
+      ]
     },
     "secureContext": "insurer1"
   },
