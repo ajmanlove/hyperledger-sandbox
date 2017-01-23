@@ -180,7 +180,8 @@ func (t *ReinsuranceRequestCC) get_contact(stub shim.ChaincodeStubInterface, enr
 	logger.Debug("Enrollment service chaincode id is " + enrollmentChaincodeId)
 
 	invokeArgs := util.ToChaincodeArgs("query", enrollmentId)
-	response, err := stub.InvokeChaincode(enrollmentChaincodeId, invokeArgs)
+	ccUrl := "github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/enrollment_service"
+	response, err := stub.QueryChaincode(ccUrl, invokeArgs)
 
 	if err != nil {
 		logger.Error(err)
