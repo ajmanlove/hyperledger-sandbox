@@ -9,7 +9,7 @@ import (
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
-	//"github.com/hyperledger/fabric/core/util"
+	"github.com/hyperledger/fabric/core/util"
 )
 
 var logger = shim.NewLogger("ReinsuranceRequestCC")
@@ -178,6 +178,17 @@ func (t *ReinsuranceRequestCC) get_contact(stub shim.ChaincodeStubInterface, enr
 	// response, err := stub.InvokeChaincode(chainCodeToCall, invokeArgs)
 
 	logger.Debug("Enrollment service chaincode id is " + enrollmentChaincodeId)
+
+	invokeArgs := util.ToChaincodeArgs("query", enrollmentId)
+	response, err := stub.InvokeChaincode(enrollmentChaincodeId, invokeArgs)
+
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to invoke enrollment_service chaincode")
+	}
+
+	logger.Debugf("Enrollment service response is %s", string(response))
+
 	return nil, nil
 }
 // ============================================================================================================================
