@@ -79,6 +79,18 @@ func createEventClient(eventAddress string, listenToRejections bool, cid string)
 	return adapter
 }
 
+var emailTemplate = `
+
+	Hello %s
+	You have a new reinsurance submission request!
+
+	Requestor: %s
+	Requestor Email: %s
+	Request Id: %s
+
+	Thanks
+`
+
 func main() {
 	var eventAddress string
 	var listenToRejections bool
@@ -140,25 +152,35 @@ func main() {
 					var rEvent common.RequestEvent
 					err := json.Unmarshal(ce.ChaincodeEvent.Payload, &rEvent)
 					if err != nil {
-						fmt.Printf("FAILED to unmarshal payload due to : %s", err)
+						fmt.Printf("FAILED to unmarshal payload due to : %s\n", err)
 					}
 
+					for _, r := range rEvent.Recipients {
+						fmt.Printf("Sending email to recipient %s (%s)\n", r.RecipientId, r.RecipientContact)
+						s := fmt.Sprintf(emailTemplate,
+							r.RecipientId,
+							rEvent.RequestorId,
+							rEvent.RequestorContact,
+							rEvent.RequestId,
+						)
 
-					err = smtp.SendMail(
-					    "smtp.gmail.com:587",
-					    auth,
-					    rEvent.RequestorContact,
-					    []string{rEvent.Recipients[0].RecipientContact},
-					    []byte("TEST EMAIL!!!"),
-					)
-					if err != nil {
-					    fmt.Printf("FAILED to send email due to : %s", err)
+						err = smtp.SendMail(
+						    "smtp.gmail.com:587",
+						    auth,
+						    rEvent.RequestorContact,
+						    []string{r.RecipientContact},
+						    []byte(s),
+						)
+
+						if err != nil {
+								fmt.Printf("FAILED to send email due to : %s\n", err)
+						}
+
 					}
 
 				default:
 					fmt.Printf("Unrecognized event name : %s \n", eventName)
 			}
-			fmt.Printf("HERE : %v", ce.ChaincodeEvent.Payload)
 		}
 	}
 }
