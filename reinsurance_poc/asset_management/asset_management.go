@@ -16,6 +16,7 @@ type AssetManagementCC struct {
 }
 
 type AssetsRecord struct {
+	AssetRights 	map[string][]string		`json:"assetRights"`
 	Submissions 	[]SubmissionRecord		`json:"submissions"`
 	Requests			[]RequestRecord				`json:"requests"`
 	Proposals			[]ProposalRecord			`json:"proposals"`
@@ -119,6 +120,8 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 		return nil, err
 	}
 
+	t.give_record_rights(record, requestId, []string {"owner", "viewer"})
+
 	record.Submissions = append(
 		record.Submissions,
 		SubmissionRecord{
@@ -147,6 +150,9 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 				Created: createDate,
 				Updated: createDate,
 		})
+
+		t.give_record_rights(record, requestId, []string {"viewer"})
+
 		_, err = t.save_record(stub, record, element)
 		if err != nil {
 			logger.Error(err)
@@ -198,6 +204,7 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 
 	if len(existing.Columns) == 0 {
 		r = AssetsRecord {
+			AssetRights: make(map[string][]string),
 			Submissions: make([]SubmissionRecord, 0),
 			Requests: make([]RequestRecord, 0),
 			Proposals: make([]ProposalRecord, 0),
@@ -243,6 +250,27 @@ func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollm
 	col1 := shim.Column{Value: &shim.Column_String_{String_: enrollmentId}}
 	columns = append(columns, col1)
 	return stub.GetRow(assetTable, columns)
+}
+
+func (t *AssetManagementCC) give_record_rights(record AssetsRecord, assetId string, rights []string) {
+	if record.AssetRights[assetId] == nil {
+		record.AssetRights[assetId] = rights
+	} else {
+		for _, e := range rights {
+			if !s_slice_contains(record.AssetRights[assetId], e) {
+				record.AssetRights[assetId] = append(record.AssetRights[assetId], e)
+			}
+		}
+	}
+}
+
+func s_slice_contains(slice []string, element string) (bool){
+	for _, e := range slice {
+      if e == element {
+          return true
+      }
+  }
+  return false
 }
 
 
