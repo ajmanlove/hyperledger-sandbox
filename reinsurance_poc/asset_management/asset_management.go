@@ -103,6 +103,9 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 }
 
 func (t *AssetManagementCC) save_record(stub shim.ChaincodeStubInterface, record AssetsRecord, enrollmentId string) (bool, error) {
+	logger.Debug("save_record()")
+	logger.Debugf("record is [%s]", record)
+
 	recordBytes, err := json.Marshal(record)
 	if err != nil {
 		logger.Error(err)
@@ -115,6 +118,8 @@ func (t *AssetManagementCC) save_record(stub shim.ChaincodeStubInterface, record
 		return false, errors.New("Failed to get record for enrollment id : " + enrollmentId)
 	}
 
+	logger.Debugf("marshalled is [%s]", recordBytes)
+	
 	if len(existing.Columns) == 0 {
 		return stub.InsertRow(assetTable, shim.Row{
 			Columns: []*shim.Column{
