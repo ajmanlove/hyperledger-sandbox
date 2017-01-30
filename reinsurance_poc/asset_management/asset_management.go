@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 )
 
 var logger = shim.NewLogger("AssetManagementCC")
@@ -117,9 +118,15 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 			}
 			enrollmentId := args[0]
 			assetId := args[1]
-			can, err := t.can_view_asset(stub, enrollmentId, assetId)
+			can, err := t.has_asset_right(stub, enrollmentId, assetId, "viewer")
 
-			return []byte(fmt.Sprintf("{\"canView\": \"%s\"}", can)), err
+			resp := common.CanViewResponse {
+				CanView: can,
+			}
+
+			bytes, err := json.Marshal(resp)
+
+			return bytes, err
 		default:
 			return nil, errors.New("Unrecognized function : " + function)
 	}
@@ -263,7 +270,7 @@ func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollm
 	return stub.GetRow(assetTable, columns)
 }
 
-func (t *AssetManagementCC) can_view_asset(stub shim.ChaincodeStubInterface, enrollmentId string, assetId string) (bool, error) {
+func (t *AssetManagementCC) has_asset_right(stub shim.ChaincodeStubInterface, enrollmentId string, assetId string, right string) (bool, error) {
 	var record AssetsRecord
 	recordBytes, err := t.get_assets_record(stub, enrollmentId)
 	if err != nil {
@@ -273,7 +280,7 @@ func (t *AssetManagementCC) can_view_asset(stub shim.ChaincodeStubInterface, enr
 
 	err = json.Unmarshal(recordBytes, &record)
 
-	can := s_slice_contains(record.AssetRights[assetId], "viewer")
+	can := s_slice_contains(record.AssetRights[assetId], right)
 
 	return can, nil
 }

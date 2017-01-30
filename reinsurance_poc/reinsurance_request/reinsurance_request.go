@@ -11,6 +11,7 @@ import (
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/util"
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 
 )
 
@@ -71,6 +72,29 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 			return stub.GetState(args[0])
 		default:
 			return nil, errors.New("Unrecognized Invoke function: " + function)
+	}
+}
+
+func (t *ReinsuranceRequestCC) get_request(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	requestId := args[0]
+	bytes, err := stub.ReadCertAttribute("enrollmentId")
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("failed to get enrollmentId attribute")
+	}
+	enrollmentId := string(bytes)
+
+	invokeArgs := util.ToChaincodeArgs("can_view_asset", enrollmentId, requestId)
+	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
+
+	var response common.CanViewResponse;
+	err = json.Unmarshal(bytes, response)
+	// TODO err
+
+	if response.CanView {
+		return stub.GetState(requestId)
+	} else {
+		return nil, errors.New("Insufficient rights to view this asset, enrollment id " + enrollmentId)
 	}
 }
 
