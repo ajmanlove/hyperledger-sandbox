@@ -113,7 +113,8 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	response, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 
 	// TODO
-	logger.Debugf("Enrollment service response is %s", string(response))
+	logger.Debugf("Asset management response is %s", string(response))
+	logger.Debugf("Asset management error is %s", err)
 
 
 	return nil, nil
