@@ -170,6 +170,10 @@ func (t *AssetManagementCC) get_assets_record(stub shim.ChaincodeStubInterface) 
 		return nil, err
 	}
 
+	if len(row.Columns) == 0 {
+		return nil, errors.New("No such record for enrollmentId " + enrollmentId)
+	}
+
 	return row.Columns[1].GetBytes(), nil
 
 }
