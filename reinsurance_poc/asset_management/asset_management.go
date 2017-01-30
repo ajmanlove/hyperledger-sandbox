@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"encoding/json"
-	// "strconv"
+	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
@@ -16,12 +16,49 @@ type AssetManagementCC struct {
 }
 
 type AssetsRecord struct {
-	Submitted 		[]string	`json:"submitted"`
-	Requested			[]string	`json:"requested"`
-	Proposed			[]string 	`json:"proposed"`
-	Accepted			[]string	`json:"accepted"`
-	Rejected			[]string	`json:"rejected"`
+	Submissions 	[]SubmissionRecord		`json:"submissions"`
+	Requests			[]RequestRecord				`json:"requests"`
+	Proposals			[]ProposalRecord			`json:"proposals"`
+	Accepted			[]AcceptedProposal		`json:"accepted"`
+	Rejected			[]RejectedProposal		`json:"rejected"`
+	Contracts 		[]SubmissionRecord		`json:"contracts"`
 }
+
+type SubmissionRecord struct {
+	SubmissionId 	string		`json:"submissionId"`
+	Requestees		[]string 	`json:"requestees"`
+	Created				uint64		`json:"created"`
+	Updated				uint64		`json:"updated"`
+}
+
+type RequestRecord struct {
+	SubmissionId 	string	`json:"submissionId"`
+	Requestor			string		`json:"requestor"`
+	Created				uint64		`json:"created"`
+	Updated				uint64		`json:"updated"`
+}
+
+type ProposalRecord struct {
+	SubmissionId 	string	`json:"submissionId"`
+	ProposalId		string	`json:"proposalId"`
+	Created				uint64		`json:"created"`
+	Updated				uint64		`json:"updated"`
+	UpdatedBy			string		`json:"updatedBy"`
+}
+
+type AcceptedProposal struct {
+	SubmissionId 	string	`json:"submissionId"`
+	ProposalId		string	`json:"proposalId"`
+	Accepted			uint64	`json:"accepted"`
+}
+
+type RejectedProposal struct {
+	SubmissionId 	[]string	`json:"submissionId"`
+	ProposalId		[]string	`json:"proposalId"`
+	Accepted				uint64	`json:"accepted"`
+}
+
+
 
 func (t *AssetManagementCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init Chaincode...")
@@ -74,12 +111,22 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 	requestId := args[0]
 	requestor := args[1]
 	requestees := strings.Split(args[2], ",")
+	createDate, err := strconv.ParseUint(args[3], 10, 64)
+	// TODO parse err
 
 	record, err := t.get_or_create_record(stub, requestor)
 	if err != nil {
 		return nil, err
 	}
-	record.Submitted = append(record.Submitted, requestId)
+
+	record.Submissions = append(
+		record.Submissions,
+		SubmissionRecord{
+			SubmissionId: requestId,
+			Requestees: requestees,
+			Created: createDate,
+			Updated: createDate,
+	})
 	_, err = t.save_record(stub, record, requestor)
 	if err != nil {
 		logger.Error(err)
@@ -91,7 +138,15 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 		if err != nil {
 			return nil, err
 		}
-		record.Requested = append(record.Requested, requestId)
+
+		record.Requests = append(
+			record.Requests,
+			RequestRecord {
+				SubmissionId: requestId,
+				Requestor: requestor,
+				Created: createDate,
+				Updated: createDate,
+		})
 		_, err = t.save_record(stub, record, element)
 		if err != nil {
 			logger.Error(err)
@@ -143,11 +198,12 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 
 	if len(existing.Columns) == 0 {
 		r = AssetsRecord {
-			Submitted: make([]string, 0),
-			Requested: make([]string, 0),
-			Proposed: make([]string, 0),
-			Accepted: make([]string, 0),
-			Rejected: make([]string, 0),
+			Submissions: make([]SubmissionRecord, 0),
+			Requests: make([]RequestRecord, 0),
+			Proposals: make([]ProposalRecord, 0),
+			Accepted: make([]AcceptedProposal, 0),
+			Rejected: make([]RejectedProposal, 0),
+			Contracts: make([]SubmissionRecord, 0),
 		}
 
 	} else {
