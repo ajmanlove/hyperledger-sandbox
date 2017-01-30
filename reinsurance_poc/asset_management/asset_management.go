@@ -73,7 +73,7 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	requestId := args[0]
 	requestor := args[1]
-	requestees := strings.Split(args[0], ",")
+	requestees := strings.Split(args[2], ",")
 
 	record, err := t.get_or_create_record(stub, requestor)
 	if err != nil {
@@ -91,7 +91,7 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 		if err != nil {
 			return nil, err
 		}
-		record.Requested = append(record.Submitted, requestId)
+		record.Requested = append(record.Requested, requestId)
 		_, err = t.save_record(stub, record, element)
 		if err != nil {
 			logger.Error(err)
