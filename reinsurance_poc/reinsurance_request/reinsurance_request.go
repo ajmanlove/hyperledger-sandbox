@@ -110,7 +110,7 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	// Note with asset management
 	// ["id", "requestor", "requestees,.."]
 	invokeArgs := util.ToChaincodeArgs("new_request", id, requestor, strings.Join(requestees,","))
-	response, err := stub.QueryChaincode(assetManagementCCId, invokeArgs)
+	response, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 
 	// TODO
 	logger.Debugf("Enrollment service response is %s", string(response))

@@ -49,16 +49,20 @@ def init_hyperledger():
     register_hl_user(setup_hl_creds[0], setup_hl_creds[1])
 
     c = Client(base_url="http://127.0.0.1:7050")
-    enroll_cc_name = deploy_chaincode(
-        c, setup_hl_creds[0], "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/enrollment_service", []
+    # enroll_cc_name = deploy_chaincode(
+    #     c, setup_hl_creds[0], "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/enrollment_service", []
+    # )
+
+    asset_cc_name = deploy_chaincode(
+        c, setup_hl_creds[0], "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/asset_management", []
     )
 
-    print("Enroll chaincode name is " + enroll_cc_name)
+    print("Asset chaincode name is " + asset_cc_name)
 
     request_cc_name = deploy_chaincode(
         c, setup_hl_creds[0],
         "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/reinsurance_request",
-        [enroll_cc_name]
+        [asset_cc_name]
     )
 
     print("Request chaincode name is " + request_cc_name)
@@ -68,45 +72,41 @@ def init_hyperledger():
     register_hl_user(reinsurer1_hl_creds[0], reinsurer1_hl_creds[1])
     register_hl_user(reinsurer2_hl_creds[0], reinsurer2_hl_creds[1])
 
-    enroll_user(enroll_cc_name, insurer1_hl_creds[0])
-    enroll_user(enroll_cc_name, reinsurer1_hl_creds[0])
-    enroll_user(enroll_cc_name, reinsurer2_hl_creds[0])
-
-    print("enrollment_service chaincode name: ", enroll_cc_name)
+    print("asset_management chaincode name: ", asset_cc_name)
     print("reinsurance_request chaincode name: ", request_cc_name)
-    
+
     print("Init of hyperledger environment COMPLETE")
 
-def enroll_user(enroll_cc_name, user):
-    data = {
-      "jsonrpc": "2.0",
-      "method": "invoke",
-      "params": {
-        "type": 1,
-        "chaincodeID": {
-          "name": enroll_cc_name
-        },
-        "ctorMsg": {
-          "function": "enroll",
-          "args": []
-        },
-        "secureContext": user,
-        "attributes": ["enrollmentId", "contact"]
-      },
-      "id": 3
-    }
-
-    data_json = json.dumps(data)
-    headers = {'Content-type': 'application/json'}
-    response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
-
-    print("RESPONSE : ", response)
-
-    if response.status_code != 200:
-        print("Unexpected status code in registrar " + r.status_code)
-        exit(1)
-
-    print("Response JSON " + response.text)
+# def enroll_user(enroll_cc_name, user):
+#     data = {
+#       "jsonrpc": "2.0",
+#       "method": "invoke",
+#       "params": {
+#         "type": 1,
+#         "chaincodeID": {
+#           "name": enroll_cc_name
+#         },
+#         "ctorMsg": {
+#           "function": "enroll",
+#           "args": []
+#         },
+#         "secureContext": user,
+#         "attributes": ["enrollmentId", "contact"]
+#       },
+#       "id": 3
+#     }
+#
+#     data_json = json.dumps(data)
+#     headers = {'Content-type': 'application/json'}
+#     response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
+#
+#     print("RESPONSE : ", response)
+#
+#     if response.status_code != 200:
+#         print("Unexpected status code in registrar " + r.status_code)
+#         exit(1)
+#
+#     print("Response JSON " + response.text)
 
 def deploy_chaincode(client, user, path, args):
     print("Deploying chaincode {} with args {}".format(path, args))
