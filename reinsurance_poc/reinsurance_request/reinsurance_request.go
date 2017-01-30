@@ -7,6 +7,7 @@ import (
 	// "strconv"
 	"strings"
 	"time"
+	"sync/atomic"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/util"
@@ -15,6 +16,8 @@ import (
 
 var logger = shim.NewLogger("ReinsuranceRequestCC")
 var assetManagementCCId = ""
+var counter uint64 = 0
+var submissionPrefix = "REQ"
 
 type ReinsuranceRequestCC struct {
 }
@@ -74,7 +77,7 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	logger.Debug("submit()")
 
-	id := "1" // TODO
+	id := t.get_new_submission_id()
 	requestees := strings.Split(args[0], ",")
 	portfolioSha := args[1]
 	portfolioUrl := args[2]
@@ -128,11 +131,15 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	return nil, nil
 }
 
+// TODO use stateful batching in case of restart
+func (t *ReinsuranceRequestCC) get_new_submission_id() (string) {
+	c := atomic.AddUint64(&counter, 1)
+	return fmt.Sprintf("%s-%d", submissionPrefix, c)
+}
 
 func get_unix_millisec() (uint64) {
 	now := time.Now()
   nanos := now.UnixNano()
-
 	return uint64(nanos / 1000000)
 }
 
