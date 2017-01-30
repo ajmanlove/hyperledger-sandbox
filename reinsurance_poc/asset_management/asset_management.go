@@ -87,9 +87,9 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 	logger.Debug("enter Invoke")
 	switch function {
 		case "new_request":
-			// expects ["id", "requestor", "requestees,.."]
-			if len(args) != 3 {
-				return nil, errors.New("Expects three arguments: ['id', 'requestor', 'requestees,..']")
+			// expects ["id", "requestor", "requestees,..", "createDate"]
+			if len(args) != 4 {
+				return nil, errors.New("Expects three arguments: ['id', 'requestor', 'requestees,..', 'createDate']")
 			}
 			return t.manage_request(stub, args)
 		default:

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	// "strconv"
 	"strings"
+	"time"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/util"
@@ -27,6 +28,8 @@ type ReinsuranceRequest struct {
 	Requestor							string 		`json:"requestor"`
 	Requestees						[]string 	`json:"requestees"`
 	ContractText					string		`json:"contractText"`
+	Created								uint64 		`json:"created"`
+	Updated								uint64		`json:"updated"`
 }
 
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -78,6 +81,8 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	contractText := args[3]
 	status := "requested"
 	bytes, err := stub.ReadCertAttribute("enrollmentId")
+	now := get_unix_millisec()
+
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("failed to get enrollmentId attribute")
@@ -92,6 +97,8 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 		PortfolioURL: portfolioUrl,
 		ContractText: contractText,
 		Status: status,
+		Created: now,
+		Updated: now,
 	}
 
 	// Submit
@@ -108,7 +115,7 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	}
 
 	// Note with asset management
-	invokeArgs := util.ToChaincodeArgs("new_request", id, requestor, strings.Join(requestees,","))
+	invokeArgs := util.ToChaincodeArgs("new_request", id, requestor, strings.Join(requestees,","), fmt.Sprintf("%d", now))
 	response, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 	if err != nil {
 		logger.Error(err)
@@ -122,6 +129,12 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 }
 
 
+func get_unix_millisec() (uint64) {
+	now := time.Now()
+  nanos := now.UnixNano()
+
+	return uint64(nanos / 1000000)
+}
 
 // ============================================================================================================================
 // Main
