@@ -17,7 +17,7 @@ type AssetManagementCC struct {
 
 type AssetsRecord struct {
 	Submitted 		[]string	`json:"submitted"`
-	Requested			[]string	`json:"submitted"`
+	Requested			[]string	`json:"requested"`
 	Proposed			[]string 	`json:"proposed"`
 	Accepted			[]string	`json:"accepted"`
 	Rejected			[]string	`json:"rejected"`
@@ -119,7 +119,7 @@ func (t *AssetManagementCC) save_record(stub shim.ChaincodeStubInterface, record
 	}
 
 	logger.Debugf("marshalled is [%s]", recordBytes)
-	
+
 	if len(existing.Columns) == 0 {
 		return stub.InsertRow(assetTable, shim.Row{
 			Columns: []*shim.Column{
