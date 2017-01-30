@@ -95,7 +95,7 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 		_, err = t.save_record(stub, record, element)
 		if err != nil {
 			logger.Error(err)
-			return nil, errors.New("Failed to save record for id " + requestor)
+			return nil, errors.New("Failed to save record for id " + element)
 		}
 	}
 
@@ -103,7 +103,6 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 }
 
 func (t *AssetManagementCC) save_record(stub shim.ChaincodeStubInterface, record AssetsRecord, enrollmentId string) (bool, error) {
-	return false, errors.New("save_record() not implemented()")
 	recordBytes, err := json.Marshal(record)
 	if err != nil {
 		logger.Error(err)
