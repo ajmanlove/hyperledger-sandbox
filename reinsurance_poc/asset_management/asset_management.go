@@ -101,8 +101,25 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 
 func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	switch function {
-	case "get_assets_record":
-			return t.get_assets_record(stub)
+		case "get_assets_record":
+			bytes, err := stub.ReadCertAttribute("enrollmentId")
+			if err != nil {
+				logger.Error(err)
+				return nil, errors.New("failed to get enrollmentId attribute")
+			}
+			enrollmentId := string(bytes)
+
+			return t.get_assets_record(stub, enrollmentId)
+		case "can_view_asset":
+			// TODO cert attribute ?
+			if len(args) != 2 {
+				return nil, errors.New("Expects 2 arguments ['enrollmentId', 'assetId']")
+			}
+			enrollmentId := args[0]
+			assetId := args[1]
+			can, err := t.can_view_asset(stub, enrollmentId, assetId)
+
+			return []byte(fmt.Sprintf("{\"canView\": \"%s\"}", can)), err
 		default:
 			return nil, errors.New("Unrecognized function : " + function)
 	}
@@ -224,13 +241,7 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 	return r, nil
 }
 
-func (t *AssetManagementCC) get_assets_record(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	bytes, err := stub.ReadCertAttribute("enrollmentId")
-	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("failed to get enrollmentId attribute")
-	}
-	enrollmentId := string(bytes)
+func (t *AssetManagementCC) get_assets_record(stub shim.ChaincodeStubInterface, enrollmentId string) ([]byte, error) {
 
 	row, err := t.get_record(stub, enrollmentId)
 	if err != nil {
@@ -250,6 +261,21 @@ func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollm
 	col1 := shim.Column{Value: &shim.Column_String_{String_: enrollmentId}}
 	columns = append(columns, col1)
 	return stub.GetRow(assetTable, columns)
+}
+
+func (t *AssetManagementCC) can_view_asset(stub shim.ChaincodeStubInterface, enrollmentId string, assetId string) (bool, error) {
+	var record AssetsRecord
+	recordBytes, err := t.get_assets_record(stub, enrollmentId)
+	if err != nil {
+		logger.Error(err)
+		return false, err
+	}
+
+	err = json.Unmarshal(recordBytes, &record)
+
+	can := s_slice_contains(record.AssetRights[assetId], "viewer")
+
+	return can, nil
 }
 
 func (t *AssetManagementCC) give_record_rights(record AssetsRecord, assetId string, rights []string) {
