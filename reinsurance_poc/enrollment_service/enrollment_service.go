@@ -18,12 +18,6 @@ var enrollmentTable = "Enrollment"
 type EnrollmentServiceCC struct {
 }
 
-// // TBD
-// type EnrollmentRecord struct {
-// 	enrollmentId 	string,
-// 	contact				string
-// }
-
 func (t *EnrollmentServiceCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init Chaincode...")
 
