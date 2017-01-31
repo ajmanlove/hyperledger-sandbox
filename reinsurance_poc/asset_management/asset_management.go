@@ -109,8 +109,13 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 				return nil, errors.New("failed to get enrollmentId attribute")
 			}
 			enrollmentId := string(bytes)
+			record, err := t.get_or_create_record(stub, enrollmentId)
+			// TODO err
 
-			return t.get_assets_record(stub, enrollmentId)
+			bytes, err = json.Marshal(record)
+			// TODO err
+
+			return bytes, nil
 		case "can_view_asset":
 			// TODO cert attribute ?
 			if len(args) != 2 {
@@ -248,21 +253,6 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 	return r, nil
 }
 
-func (t *AssetManagementCC) get_assets_record(stub shim.ChaincodeStubInterface, enrollmentId string) ([]byte, error) {
-
-	row, err := t.get_record(stub, enrollmentId)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(row.Columns) == 0 {
-		return nil, errors.New("No such record for enrollmentId " + enrollmentId)
-	}
-
-	return row.Columns[1].GetBytes(), nil
-
-}
-
 func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollmentId string) (shim.Row, error) {
 	var columns []shim.Column
 	col1 := shim.Column{Value: &shim.Column_String_{String_: enrollmentId}}
@@ -271,17 +261,10 @@ func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollm
 }
 
 func (t *AssetManagementCC) has_asset_right(stub shim.ChaincodeStubInterface, enrollmentId string, assetId string, right string) (bool, error) {
-	var record AssetsRecord
-	recordBytes, err := t.get_assets_record(stub, enrollmentId)
-	if err != nil {
-		logger.Error(err)
-		return false, err
-	}
-
-	err = json.Unmarshal(recordBytes, &record)
+	record, _ := t.get_or_create_record(stub, enrollmentId)
+	// TODO err
 
 	can := s_slice_contains(record.AssetRights[assetId], right)
-
 	return can, nil
 }
 
