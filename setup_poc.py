@@ -82,11 +82,49 @@ def init_hyperledger():
     register_hl_user(insurer2_hl_creds[0], insurer2_hl_creds[1])
     register_hl_user(reinsurer3_hl_creds[0], reinsurer3_hl_creds[1])
 
+    register_cc(asset_cc_name, setup_hl_creds[0], request_cc_name, "reinsurance_request")
+    register_cc(asset_cc_name, setup_hl_creds[0], proposal_cc_name, "reinsurance_proposal")
+
+    print("")
+    print("-----------------------------------------------------------")
     print("asset_management chaincode name: ", asset_cc_name)
     print("reinsurance_request chaincode name: ", request_cc_name)
     print("reinsurance_proposal chaincode name: ", proposal_cc_name)
-
+    print("-----------------------------------------------------------")
+    print("")
     print("Init of hyperledger environment COMPLETE")
+
+def register_cc(am_name, user, cc_name, identifier):
+    print("Registering chaincode {} as {}".format(cc_name, identifier))
+    data = {
+      "jsonrpc": "2.0",
+      "method": "invoke",
+      "params": {
+        "type": 1,
+        "chaincodeID": {
+          "name": am_name
+        },
+        "ctorMsg": {
+          "function": "register_chaincode",
+          "args": [cc_name, identifier]
+        },
+        "secureContext": user,
+        "attributes": ["enrollmentId", "contact"]
+      },
+      "id": 3
+    }
+
+    data_json = json.dumps(data)
+    headers = {'Content-type': 'application/json'}
+    response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
+
+    print("RESPONSE : ", response)
+
+    if response.status_code != 200:
+        print("Unexpected status code in registrar " + response.status_code)
+        exit(1)
+
+    print("Response JSON " + response.text)
 
 # def enroll_user(enroll_cc_name, user):
 #     data = {
@@ -167,6 +205,7 @@ def stop():
 def teardown_docker():
     os.chdir("docker")
     check_call("docker-compose down", shell=True)
+    check_call("docker-compose rm -f", shell=True)
 
 commands = {
     "start" : start,

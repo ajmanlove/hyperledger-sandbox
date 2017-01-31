@@ -25,7 +25,7 @@ func (t *AssetManagementCC) Init(stub shim.ChaincodeStubInterface, function stri
 
 	// Create enrollment table
 	err := stub.CreateTable(assetTable, []*shim.ColumnDefinition{
-		{Name: "enrollmentId", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "id", Type: shim.ColumnDefinition_STRING, Key: true},
 		{Name: "Records", Type: shim.ColumnDefinition_BYTES, Key: false},
 	})
 
@@ -42,6 +42,17 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 
 	logger.Debug("enter Invoke")
 	switch function {
+	case "register_chaincode":
+		if len(args) != 2 {
+			return nil, errors.New("Expects 2 args: ['chaincode_name', 'chaincode_identifier']")
+		}
+		cc_name := args[0]
+		cc_id := args[1]
+
+		_, err := t.register_chaincode(stub, cc_name, cc_id)
+
+		return nil, err
+
 	case "new_request":
 		// expects ["id", "requestor", "requestees,..", "createDate"]
 		if len(args) != 4 {
@@ -56,6 +67,22 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 
 func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	switch function {
+	case "get_cc_name":
+		if len(args) != 1 {
+			return nil, errors.New("Expects 2 arguments ['chaincode_id']")
+		}
+
+		row, err := t.get_record(stub, args[0])
+		if err != nil {
+			//TODO err
+		}
+
+		if len(row.Columns) == 0 {
+			return nil, errors.New("No such chaincode record for identifier " + args[0])
+		}
+
+		return row.Columns[1].GetBytes(), nil
+
 	case "get_assets_record":
 		bytes, err := stub.ReadCertAttribute("enrollmentId")
 		if err != nil {
@@ -95,6 +122,29 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 
 	default:
 		return nil, errors.New("Unrecognized function : " + function)
+	}
+}
+
+// TODO think on this
+func (t *AssetManagementCC) register_chaincode(stub shim.ChaincodeStubInterface, cc_name string, cc_id string) (bool, error) {
+	existing, err := t.get_record(stub, cc_id)
+	if err != nil {
+		// TODO err
+	}
+
+	if len(existing.Columns) == 0 {
+		return stub.InsertRow(assetTable, shim.Row{
+			Columns: []*shim.Column{
+				&shim.Column{Value: &shim.Column_String_{String_: cc_id}},
+				&shim.Column{Value: &shim.Column_Bytes{Bytes: []byte(cc_name)}}},
+		})
+
+	} else {
+		return stub.ReplaceRow(assetTable, shim.Row{
+			Columns: []*shim.Column{
+				&shim.Column{Value: &shim.Column_String_{String_: cc_id}},
+				&shim.Column{Value: &shim.Column_Bytes{Bytes: []byte(cc_name)}}},
+		})
 	}
 }
 
