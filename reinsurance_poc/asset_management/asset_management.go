@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
-	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"strconv"
 	"strings"
+
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
+	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
 var logger = shim.NewLogger("AssetManagementCC")
@@ -25,8 +25,8 @@ func (t *AssetManagementCC) Init(stub shim.ChaincodeStubInterface, function stri
 
 	// Create enrollment table
 	err := stub.CreateTable(assetTable, []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{Name: "enrollmentId", Type: shim.ColumnDefinition_STRING, Key: true},
-		&shim.ColumnDefinition{Name: "Records", Type: shim.ColumnDefinition_BYTES, Key: false},
+		{Name: "enrollmentId", Type: shim.ColumnDefinition_STRING, Key: true},
+		{Name: "Records", Type: shim.ColumnDefinition_BYTES, Key: false},
 	})
 
 	if err != nil {
@@ -66,26 +66,28 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 		record, err := t.get_or_create_record(stub, enrollmentId)
 		// TODO err
 
-		bytes, err = json.Marshal(record)
+		bytes, err = record.Encode()
 		// TODO err
 
 		return bytes, nil
-	case "can_view_asset":
+
+	case "get_asset_rights":
 		// TODO cert attribute ?
 		if len(args) != 2 {
 			return nil, errors.New("Expects 2 arguments ['enrollmentId', 'assetId']")
 		}
 		enrollmentId := args[0]
 		assetId := args[1]
-		can, err := t.has_asset_right(stub, enrollmentId, assetId, "viewer")
 
-		resp := common.CanViewResponse{
-			CanView: can,
+		rights, err := t.get_asset_rights(stub, enrollmentId, assetId)
+		if err != nil {
+			logger.Error(err)
+			return nil, errors.New("Failed to get asset rights") // TODO better message
 		}
+		response := common.BuildArr(rights)
 
-		bytes, err := json.Marshal(resp)
+		return response.Encode()
 
-		return bytes, err
 	default:
 		return nil, errors.New("Unrecognized function : " + function)
 	}
@@ -103,7 +105,7 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 		return nil, err
 	}
 
-	t.give_record_rights(record, requestId, []string{"owner", "viewer"})
+	t.give_record_rights(record, requestId, []common.AssetRight{common.AOWNER, common.AVIEWER})
 
 	record.Submissions = append(
 		record.Submissions,
@@ -134,7 +136,7 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 				Updated:      createDate,
 			})
 
-		t.give_record_rights(record, requestId, []string{"viewer"})
+		t.give_record_rights(record, requestId, []common.AssetRight{common.AVIEWER})
 
 		_, err = t.save_record(stub, record, element)
 		if err != nil {
@@ -150,7 +152,7 @@ func (t *AssetManagementCC) save_record(stub shim.ChaincodeStubInterface, record
 	logger.Debug("save_record()")
 	logger.Debugf("record is [%s]", record)
 
-	recordBytes, err := json.Marshal(record)
+	recordBytes, err := record.Encode()
 	if err != nil {
 		logger.Error(err)
 		return false, errors.New("Failed to serialize record")
@@ -187,7 +189,7 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 
 	if len(existing.Columns) == 0 {
 		r = common.AssetsRecord{
-			AssetRights: make(map[string][]string),
+			AssetRights: make(map[string][]common.AssetRight),
 			Submissions: make([]common.SubmissionRecord, 0),
 			Requests:    make([]common.RequestRecord, 0),
 			Proposals:   make([]common.ProposalRecord, 0),
@@ -197,7 +199,7 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 		}
 
 	} else {
-		err = json.Unmarshal(existing.Columns[1].GetBytes(), &r)
+		err = r.Decode(existing.Columns[1].GetBytes())
 		if err != nil {
 			logger.Error(err)
 			return r, errors.New("Failed to deserialize asset record: " + enrollmentId)
@@ -214,33 +216,23 @@ func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollm
 	return stub.GetRow(assetTable, columns)
 }
 
-func (t *AssetManagementCC) has_asset_right(stub shim.ChaincodeStubInterface, enrollmentId string, assetId string, right string) (bool, error) {
+func (t *AssetManagementCC) get_asset_rights(stub shim.ChaincodeStubInterface, enrollmentId string, assetId string) ([]common.AssetRight, error) {
 	record, _ := t.get_or_create_record(stub, enrollmentId)
 	// TODO err
 
-	can := s_slice_contains(record.AssetRights[assetId], right)
-	return can, nil
+	return record.AssetRights[assetId], nil
 }
 
-func (t *AssetManagementCC) give_record_rights(record common.AssetsRecord, assetId string, rights []string) {
+func (t *AssetManagementCC) give_record_rights(record common.AssetsRecord, assetId string, rights []common.AssetRight) {
 	if record.AssetRights[assetId] == nil {
 		record.AssetRights[assetId] = rights
 	} else {
 		for _, e := range rights {
-			if !s_slice_contains(record.AssetRights[assetId], e) {
+			if record.ContainsRight(assetId, e) {
 				record.AssetRights[assetId] = append(record.AssetRights[assetId], e)
 			}
 		}
 	}
-}
-
-func s_slice_contains(slice []string, element string) bool {
-	for _, e := range slice {
-		if e == element {
-			return true
-		}
-	}
-	return false
 }
 
 // ============================================================================================================================

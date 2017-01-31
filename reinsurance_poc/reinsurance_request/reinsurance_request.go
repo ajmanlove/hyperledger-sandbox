@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	// "strconv"
@@ -70,18 +69,17 @@ func (t *ReinsuranceRequestCC) get_request(stub shim.ChaincodeStubInterface, arg
 	}
 	enrollmentId := string(bytes)
 
-	invokeArgs := util.ToChaincodeArgs("can_view_asset", enrollmentId, requestId)
+	invokeArgs := util.ToChaincodeArgs("get_asset_rights", enrollmentId, requestId)
 	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
 
-	var response common.CanViewResponse
-	err = json.Unmarshal(bytes, response)
-	if err != nil {
+	var response common.AssetRightsResponse
+	if err := response.Decode(bytes); err != nil {
 		logger.Error(err)
-		return nil, errors.New("Failed to deserializes CanViewResponse")
+		return nil, errors.New("Failed to deserialize AssetRight")
 	}
 
-	if response.CanView {
-		return stub.GetState(requestId)
+	if response.Contains(common.AVIEWER) {
+		return stub.GetState(requestId) // TODO visibility
 	} else {
 		return nil, errors.New("Insufficient rights to view this asset, enrollment id " + enrollmentId)
 	}
@@ -118,7 +116,7 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	}
 
 	// Submit
-	bytes, err = json.Marshal(rr)
+	bytes, err = rr.Encode()
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to serialize request")
