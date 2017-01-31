@@ -25,7 +25,7 @@ func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function 
 	logger.Debug("Init()")
 
 	bytes, err := stub.GetPayload()
-	var spec pb.ChaincodeInvocationSpec
+	var spec pb.ChaincodeInput
 	err = proto.Unmarshal(bytes, &spec)
 
 	if err != nil {
