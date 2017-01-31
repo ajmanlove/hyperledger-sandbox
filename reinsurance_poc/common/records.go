@@ -116,3 +116,22 @@ func (r *ReinsuranceRequest) Encode() ([]byte, error) {
 func (r *ReinsuranceRequest) Decode(bytes []byte) error {
 	return json.Unmarshal(bytes, &r)
 }
+
+type ReinsuranceBid struct {
+	Id           string `json:"id"`
+	RequestId    string `json:"requestId"`
+	Bidder       string `json:"bidder"`
+	ContractText string `json:"contractText"`
+	Created      uint64 `json:"created"`
+	Updated      uint64 `json:"updated"`
+	UpdatedBy    string `json:"updatedBy"`
+	Status       string `json:"status"`
+}
+
+func (r *ReinsuranceBid) Encode() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func (r *ReinsuranceBid) Decode(bytes []byte) error {
+	return json.Unmarshal(bytes, &r)
+}

@@ -7,6 +7,9 @@ import (
 	// "strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+
+	"github.com/golang/protobuf/proto"
+	pb "github.com/hyperledger/fabric/protos"
 )
 
 var logger = shim.NewLogger("ReinsuranceProposalCC")
@@ -20,9 +23,20 @@ type ReinsuranceProposal struct {
 
 func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
-	if len(args) != 0 {
-		return nil, errors.New("Init does not support arguments")
+
+	bytes, err := stub.GetPayload()
+	var spec pb.ChaincodeSpec
+	err = proto.Unmarshal(bytes, &spec)
+
+	if err != nil {
+		logger.Error("ERROR HERE")
+		logger.Error(err)
+
+		return nil, errors.New("Failed to unmarshal payload")
 	}
+	//if len(args) != 0 {
+	//	return nil, errors.New("Init does not support arguments")
+	//}
 	return nil, nil
 }
 
