@@ -69,6 +69,12 @@ def init_hyperledger():
 
     print("Request chaincode name is " + request_cc_name)
 
+    proposal_cc_name = deploy_chaincode(
+        c, setup_hl_creds[0],
+        "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/reinsurance_proposal",
+        [asset_cc_name]
+    )
+
     print("Enrolling test users...")
     register_hl_user(insurer1_hl_creds[0], insurer1_hl_creds[1])
     register_hl_user(reinsurer1_hl_creds[0], reinsurer1_hl_creds[1])
@@ -78,6 +84,7 @@ def init_hyperledger():
 
     print("asset_management chaincode name: ", asset_cc_name)
     print("reinsurance_request chaincode name: ", request_cc_name)
+    print("reinsurance_proposal chaincode name: ", proposal_cc_name)
 
     print("Init of hyperledger environment COMPLETE")
 

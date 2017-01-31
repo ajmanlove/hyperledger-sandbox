@@ -7,12 +7,10 @@ import (
 	// "strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-
-	"github.com/golang/protobuf/proto"
-	pb "github.com/hyperledger/fabric/protos"
 )
 
 var logger = shim.NewLogger("ReinsuranceProposalCC")
+var assetManagementCCId = ""
 
 type ReinsuranceProposalCC struct {
 }
@@ -24,19 +22,11 @@ type ReinsuranceProposal struct {
 func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
 
-	bytes, err := stub.GetPayload()
-	var spec pb.ChaincodeInput
-	err = proto.Unmarshal(bytes, &spec)
-
-	if err != nil {
-		logger.Error("ERROR HERE")
-		logger.Error(err)
-
-		return nil, fmt.Errorf("Failed to unmarshal payload due to : [%s]", err)
+	if len(args) != 1 {
+		return nil, errors.New("Init expects expects asset management cc id as arg")
 	}
-	//if len(args) != 0 {
-	//	return nil, errors.New("Init does not support arguments")
-	//}
+	assetManagementCCId = args[0]
+
 	return nil, nil
 }
 
