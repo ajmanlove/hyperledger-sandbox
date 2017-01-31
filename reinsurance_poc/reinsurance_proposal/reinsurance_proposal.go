@@ -16,7 +16,6 @@ type ReinsuranceProposalCC struct {
 
 // TBD
 type ReinsuranceProposal struct {
-
 }
 
 func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {

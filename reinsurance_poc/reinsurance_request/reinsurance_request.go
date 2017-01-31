@@ -1,18 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"encoding/json"
 	// "strconv"
 	"strings"
-	"time"
 	"sync/atomic"
+	"time"
 
+	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/util"
-	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
-
 )
 
 var logger = shim.NewLogger("ReinsuranceRequestCC")
@@ -23,31 +22,18 @@ var submissionPrefix = "REQ"
 type ReinsuranceRequestCC struct {
 }
 
-// TBD
-type ReinsuranceRequest struct {
-	Id 										string 		`json:"id"`
-	PortfolioSHA					string 		`json:"portfolioSha"`
-	PortfolioURL					string 		`json:"portfolioUrl"`
-	Status								string 		`json:"status"`
-	Requestor							string 		`json:"requestor"`
-	Requestees						[]string 	`json:"requestees"`
-	ContractText					string		`json:"contractText"`
-	Created								uint64 		`json:"created"`
-	Updated								uint64		`json:"updated"`
-}
-
 func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debugf("enter Init, function: [%s], args [%s]", function, args)
 
 	switch function {
-		case "init":
-			if len(args) != 1 {
-				return nil, errors.New("Expects chaincode id for asset_management as init arg")
-			}
-			assetManagementCCId = args[0]
-			return nil, nil
-		default:
-			return nil, errors.New("Unrecognized Init function: " + function)
+	case "init":
+		if len(args) != 1 {
+			return nil, errors.New("Expects chaincode id for asset_management as init arg")
+		}
+		assetManagementCCId = args[0]
+		return nil, nil
+	default:
+		return nil, errors.New("Unrecognized Init function: " + function)
 	}
 	return nil, nil
 }
@@ -55,23 +41,23 @@ func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function s
 func (t *ReinsuranceRequestCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debugf("enter Invoke, function: [%s], args [%s]", function, args)
 	switch function {
-		case "submit":
-			return t.submit(stub, args)
-		default:
-			return nil, errors.New("Unrecognized Invoke function: " + function)
+	case "submit":
+		return t.submit(stub, args)
+	default:
+		return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
 }
 
 func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debugf("enter Query, function: [%s], args [%s]", function, args)
 	switch function {
-		case "get_request":
-			if len(args) != 1 {
-				return nil, errors.New("Expected 1 arg, id") // TODO temporary
-			}
-			return t.get_request(stub, args)
-		default:
-			return nil, errors.New("Unrecognized Invoke function: " + function)
+	case "get_request":
+		if len(args) != 1 {
+			return nil, errors.New("Expected 1 arg, asset id")
+		}
+		return t.get_request(stub, args)
+	default:
+		return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
 }
 
@@ -87,9 +73,12 @@ func (t *ReinsuranceRequestCC) get_request(stub shim.ChaincodeStubInterface, arg
 	invokeArgs := util.ToChaincodeArgs("can_view_asset", enrollmentId, requestId)
 	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
 
-	var response common.CanViewResponse;
+	var response common.CanViewResponse
 	err = json.Unmarshal(bytes, response)
-	// TODO err
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to deserializes CanViewResponse")
+	}
 
 	if response.CanView {
 		return stub.GetState(requestId)
@@ -116,16 +105,16 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	}
 	requestor := string(bytes)
 
-	rr := ReinsuranceRequest {
-		Id: id,
-		Requestor: requestor,
-		Requestees: requestees,
+	rr := common.ReinsuranceRequest{
+		Id:           id,
+		Requestor:    requestor,
+		Requestees:   requestees,
 		PortfolioSHA: portfolioSha,
 		PortfolioURL: portfolioUrl,
 		ContractText: contractText,
-		Status: status,
-		Created: now,
-		Updated: now,
+		Status:       status,
+		Created:      now,
+		Updated:      now,
 	}
 
 	// Submit
@@ -142,7 +131,7 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	}
 
 	// Note with asset management
-	invokeArgs := util.ToChaincodeArgs("new_request", id, requestor, strings.Join(requestees,","), fmt.Sprintf("%d", now))
+	invokeArgs := util.ToChaincodeArgs("new_request", id, requestor, strings.Join(requestees, ","), fmt.Sprintf("%d", now))
 	response, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 	if err != nil {
 		logger.Error(err)
@@ -156,14 +145,14 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 }
 
 // TODO use stateful batching in case of restart
-func (t *ReinsuranceRequestCC) get_new_submission_id() (string) {
+func (t *ReinsuranceRequestCC) get_new_submission_id() string {
 	c := atomic.AddUint64(&counter, 1)
 	return fmt.Sprintf("%s-%d", submissionPrefix, c)
 }
 
-func get_unix_millisec() (uint64) {
+func get_unix_millisec() uint64 {
 	now := time.Now()
-  nanos := now.UnixNano()
+	nanos := now.UnixNano()
 	return uint64(nanos / 1000000)
 }
 

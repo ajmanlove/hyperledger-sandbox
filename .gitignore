@@ -6,3 +6,5 @@ reinsurance_poc/asset_management/asset_management
 simple_contract/simple_contract
 simple_contract_table/simple_contract_table
 simple_listener/simple_listener
+.idea
+*.iml
