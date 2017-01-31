@@ -81,7 +81,12 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 			return nil, errors.New("No such chaincode record for identifier " + args[0])
 		}
 
-		return row.Columns[1].GetBytes(), nil
+		ccn := common.CCNameResponse{Name: string(row.Columns[1].GetBytes())}
+		r, err := ccn.Encode()
+		if err != nil {
+			// TODO err
+		}
+		return r, nil
 
 	case "get_assets_record":
 		bytes, err := stub.ReadCertAttribute("enrollmentId")

@@ -7,10 +7,6 @@ type Response interface {
 	Decode([]byte) (Response, error)
 }
 
-type CanViewResponse struct {
-	CanView bool `json:"canView"`
-}
-
 type AssetRightsResponse struct {
 	Rights []AssetRight
 }
@@ -34,4 +30,16 @@ func (arr *AssetRightsResponse) Contains(right AssetRight) bool {
 
 func BuildArr(rights []AssetRight) AssetRightsResponse {
 	return AssetRightsResponse{Rights: rights}
+}
+
+type CCNameResponse struct {
+	Name string
+}
+
+func (ccn *CCNameResponse) Encode() ([]byte, error) {
+	return json.Marshal(ccn)
+}
+
+func (ccn *CCNameResponse) Decode(bytes []byte) error {
+	return json.Unmarshal(bytes, &ccn)
 }
