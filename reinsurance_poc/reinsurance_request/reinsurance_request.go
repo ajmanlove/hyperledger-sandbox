@@ -69,7 +69,7 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 			if len(args) != 1 {
 				return nil, errors.New("Expected 1 arg, id") // TODO temporary
 			}
-			return stub.GetState(args[0])
+			return t.get_request(stub, args)
 		default:
 			return nil, errors.New("Unrecognized Invoke function: " + function)
 	}

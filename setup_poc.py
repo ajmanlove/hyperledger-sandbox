@@ -12,6 +12,8 @@ setup_hl_creds = ("test_user0", "MS9qrN8hFjlE")
 insurer1_hl_creds = ("insurer1", "iF6bJY5sWumg")
 reinsurer1_hl_creds = ("reinsurer1", "8jUZV34kUBcN")
 reinsurer2_hl_creds = ("reinsurer2", "RmMio3LCk37J")
+insurer2_hl_creds = ("insurer2", "1wtM0CXjIVXr")
+reinsurer3_hl_creds = ("reinsurer3", "atjQRL2S6FJx")
 
 def start():
     print("Setting up poc environment...")
@@ -71,6 +73,8 @@ def init_hyperledger():
     register_hl_user(insurer1_hl_creds[0], insurer1_hl_creds[1])
     register_hl_user(reinsurer1_hl_creds[0], reinsurer1_hl_creds[1])
     register_hl_user(reinsurer2_hl_creds[0], reinsurer2_hl_creds[1])
+    register_hl_user(insurer2_hl_creds[0], insurer2_hl_creds[1])
+    register_hl_user(reinsurer3_hl_creds[0], reinsurer3_hl_creds[1])
 
     print("asset_management chaincode name: ", asset_cc_name)
     print("reinsurance_request chaincode name: ", request_cc_name)

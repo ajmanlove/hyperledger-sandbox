@@ -88,9 +88,11 @@ eca:
            insurers_and_reinsurers:
               insurers:
                   - insurer_a
+                  - insurer_b
               reinsurers:
                   - reinsurer_a
                   - reinsurer_b
+                  - reinsurer_c
 
         users:
                 #
@@ -132,6 +134,8 @@ eca:
                 insurer1: 1 iF6bJY5sWumg insurer_a
                 reinsurer1: 1 8jUZV34kUBcN reinsurer_a
                 reinsurer2: 1 RmMio3LCk37J reinsurer_b
+                insurer2: 1 1wtM0CXjIVXr insurer_b
+                reinsurer3: 1 atjQRL2S6FJx reinsurer_c
 
                 vp: 4 f3489fy98ghf
 
@@ -209,6 +213,10 @@ aca:
               attribute-entry-15: reinsurer1;reinsurer_a;contact;andrew.manlove@agildata.com;2016-01-01T00:00:00-03:00;;
               attribute-entry-16: reinsurer2;reinsurer_b;enrollmentId;reinsurer2;2016-01-01T00:00:00-03:00;;
               attribute-entry-17: reinsurer2;reinsurer_b;contact;andrew.manlove@agildata.com;2016-01-01T00:00:00-03:00;;
+              attribute-entry-18: insurer2;insurer_b;enrollmentId;insurer2;2016-01-01T00:00:00-03:00;;
+              attribute-entry-19: insurer2;insurer_b;contact;foo@foo.com;2016-01-01T00:00:00-03:00;;
+              attribute-entry-20: reinsurer3;reinsurer_c;enrollmentId;reinsurer3;2016-01-01T00:00:00-03:00;;
+              attribute-entry-21: reinsurer3;reinsurer_c;contact;bar@bar.com;2016-01-01T00:00:00-03:00;;
 
 
           address: localhost:7054
