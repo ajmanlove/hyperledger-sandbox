@@ -5,6 +5,7 @@ import "encoding/json"
 type Record interface {
 	Encode() ([]byte, error)
 	Decode([]byte) (Record, error)
+	Init()
 }
 
 type AssetsRecord struct {
@@ -26,12 +27,38 @@ func (arr *AssetsRecord) ContainsRight(assetId string, right AssetRight) bool {
 	return false
 }
 
+func (arr *AssetsRecord) GiveRights(assetId string, rights []AssetRight) {
+	if arr.AssetRights[assetId] == nil {
+		arr.AssetRights[assetId] = rights
+	} else {
+		for _, e := range rights {
+			arr.GiveRight(assetId, e)
+		}
+	}
+}
+
+func (arr *AssetsRecord) GiveRight(assetId string, right AssetRight) {
+	if arr.ContainsRight(assetId, right) {
+		arr.AssetRights[assetId] = append(arr.AssetRights[assetId], right)
+	}
+}
+
 func (r *AssetsRecord) Encode() ([]byte, error) {
 	return json.Marshal(r)
 }
 
 func (r *AssetsRecord) Decode(bytes []byte) error {
 	return json.Unmarshal(bytes, &r)
+}
+
+func (r *AssetsRecord) Init() {
+	r.AssetRights = make(map[string][]AssetRight)
+	r.Submissions = make([]SubmissionRecord, 0)
+	r.Requests = make([]RequestRecord, 0)
+	r.Proposals = make([]ProposalRecord, 0)
+	r.Accepted = make([]AcceptedProposal, 0)
+	r.Rejected = make([]RejectedProposal, 0)
+	r.Contracts = make([]SubmissionRecord, 0)
 }
 
 type SubmissionRecord struct {
@@ -75,7 +102,9 @@ type ReinsuranceRequest struct {
 	Status       string   `json:"status"`
 	Requestor    string   `json:"requestor"`
 	Requestees   []string `json:"requestees"`
-	ContractText string   `json:"contractText"`
+	ContractText string   `json:"contractText"` // TODO needed here?
+	ISQLSchema   string   `json:"iSQLSchema"`
+	ISQLVersion  string   `json:"iSQLVersion"`
 	Created      uint64   `json:"created"`
 	Updated      uint64   `json:"updated"`
 }

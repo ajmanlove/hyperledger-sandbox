@@ -93,6 +93,8 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	portfolioSha := args[1]
 	portfolioUrl := args[2]
 	contractText := args[3]
+	schema := args[4]
+	schemaVersion := args[5]
 	status := "requested"
 	bytes, err := stub.ReadCertAttribute("enrollmentId")
 	now := get_unix_millisec()
@@ -110,6 +112,8 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 		PortfolioSHA: portfolioSha,
 		PortfolioURL: portfolioUrl,
 		ContractText: contractText,
+		ISQLSchema:   schema,
+		ISQLVersion:  schemaVersion,
 		Status:       status,
 		Created:      now,
 		Updated:      now,

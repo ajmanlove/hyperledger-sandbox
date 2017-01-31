@@ -3,7 +3,7 @@ package common
 type AssetRight int32
 
 const (
-	AOWNER  AssetRight = iota
-	AVIEWER AssetRight = iota
-	AHOLDER AssetRight = iota
+	AOWNER  AssetRight = 0
+	AVIEWER AssetRight = 1
+	AHOLDER AssetRight = 2
 )

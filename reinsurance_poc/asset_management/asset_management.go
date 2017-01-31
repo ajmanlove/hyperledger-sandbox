@@ -64,10 +64,15 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 		}
 		enrollmentId := string(bytes)
 		record, err := t.get_or_create_record(stub, enrollmentId)
-		// TODO err
+		if err != nil {
+			return nil, err
+		}
 
 		bytes, err = record.Encode()
-		// TODO err
+		if err != nil {
+			logger.Error(err)
+			return nil, errors.New("Failed to serialize record response")
+		}
 
 		return bytes, nil
 
@@ -105,7 +110,7 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 		return nil, err
 	}
 
-	t.give_record_rights(record, requestId, []common.AssetRight{common.AOWNER, common.AVIEWER})
+	record.GiveRights(requestId, []common.AssetRight{common.AOWNER, common.AVIEWER})
 
 	record.Submissions = append(
 		record.Submissions,
@@ -136,7 +141,7 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 				Updated:      createDate,
 			})
 
-		t.give_record_rights(record, requestId, []common.AssetRight{common.AVIEWER})
+		record.GiveRight(requestId, common.AVIEWER)
 
 		_, err = t.save_record(stub, record, element)
 		if err != nil {
@@ -186,27 +191,19 @@ func (t *AssetManagementCC) get_or_create_record(stub shim.ChaincodeStubInterfac
 	var r common.AssetsRecord
 
 	existing, err := t.get_record(stub, enrollmentId)
+	// TODO use err
+	if len(existing.Columns) > 0 {
 
-	if len(existing.Columns) == 0 {
-		r = common.AssetsRecord{
-			AssetRights: make(map[string][]common.AssetRight),
-			Submissions: make([]common.SubmissionRecord, 0),
-			Requests:    make([]common.RequestRecord, 0),
-			Proposals:   make([]common.ProposalRecord, 0),
-			Accepted:    make([]common.AcceptedProposal, 0),
-			Rejected:    make([]common.RejectedProposal, 0),
-			Contracts:   make([]common.SubmissionRecord, 0),
-		}
-
-	} else {
 		err = r.Decode(existing.Columns[1].GetBytes())
 		if err != nil {
 			logger.Error(err)
 			return r, errors.New("Failed to deserialize asset record: " + enrollmentId)
 		}
+		return r, nil
+	} else {
+		r.Init()
+		return r, nil
 	}
-
-	return r, nil
 }
 
 func (t *AssetManagementCC) get_record(stub shim.ChaincodeStubInterface, enrollmentId string) (shim.Row, error) {
@@ -221,18 +218,6 @@ func (t *AssetManagementCC) get_asset_rights(stub shim.ChaincodeStubInterface, e
 	// TODO err
 
 	return record.AssetRights[assetId], nil
-}
-
-func (t *AssetManagementCC) give_record_rights(record common.AssetsRecord, assetId string, rights []common.AssetRight) {
-	if record.AssetRights[assetId] == nil {
-		record.AssetRights[assetId] = rights
-	} else {
-		for _, e := range rights {
-			if record.ContainsRight(assetId, e) {
-				record.AssetRights[assetId] = append(record.AssetRights[assetId], e)
-			}
-		}
-	}
 }
 
 // ============================================================================================================================
