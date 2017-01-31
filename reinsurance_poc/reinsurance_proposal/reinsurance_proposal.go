@@ -32,7 +32,7 @@ func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function 
 		logger.Error("ERROR HERE")
 		logger.Error(err)
 
-		return nil, errors.New("Failed to unmarshal payload")
+		return nil, fmt.Errorf("Failed to unmarshal payload due to : [%s]", err)
 	}
 	//if len(args) != 0 {
 	//	return nil, errors.New("Init does not support arguments")
