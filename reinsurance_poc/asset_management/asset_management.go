@@ -197,13 +197,6 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 	return nil, err
 }
 
-//type ProposalRecord struct {
-//	SubmissionId string `json:"submissionId"`
-//	ProposalId   string `json:"proposalId"`
-//	Created      uint64 `json:"created"`
-//	Updated      uint64 `json:"updated"`
-//	UpdatedBy    string `json:"updatedBy"`
-//}
 func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	if len(args) != 4 {
 		return nil, errors.New("Expects 4 args ['proposalId', 'requestId', 'bidder', 'createDate']")
@@ -211,7 +204,6 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 	proposalId := args[0]
 	requestId := args[1]
 	bidder := args[2]
-	//requestor := args[]
 	// TODO parse err
 	createDate, err := strconv.ParseUint(args[3], 10, 64)
 
@@ -249,6 +241,12 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 		return nil, errors.New("Failed to save record for id " + bidder)
 	}
 
+	err = am.AssignRights(stub, proposalId, bidder, []common.AssetRight{common.AOWNER, common.AVIEWER})
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to assign rights to id " + bidder)
+	}
+
 	record, err = um.GetUserAssetRecord(stub, originalReq.Requestor)
 	if err != nil {
 		return nil, err
@@ -263,10 +261,16 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 			Updated:      createDate,
 			UpdatedBy:    bidder,
 		})
-	_, err = um.SaveUserAssetRecord(stub, bidder, record)
+	_, err = um.SaveUserAssetRecord(stub, originalReq.Requestor, record)
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to save record for id " + bidder)
+	}
+
+	err = am.AssignRights(stub, proposalId, originalReq.Requestor, []common.AssetRight{common.AVIEWER, common.AAPPROVAL})
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to assign rights to id " + bidder)
 	}
 
 	return nil, nil
