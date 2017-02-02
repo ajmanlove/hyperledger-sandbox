@@ -37,6 +37,7 @@ func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function 
 		return nil, errors.New("Init expects expects asset management cc id as arg")
 	}
 	assetManagementCCId = args[0]
+	amComm.CCName = assetManagementCCId
 
 	return nil, nil
 }
