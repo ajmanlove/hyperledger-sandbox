@@ -104,6 +104,7 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 		return bytes, nil
 
 	case common.AM_GET_AST_RIGHTS_ARG:
+		// TODO only admin access to this method?
 		// TODO cert attribute ?
 		if len(args) != 2 {
 			return nil, errors.New("Expects 2 arguments ['enrollmentId', 'assetId']")
@@ -117,17 +118,22 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 			// TODO
 		}
 
+		var rights []common.AssetRight
+		var response common.Response
 		if exists {
-			rights, err := am.GetUserRights(stub, assetId, enrollmentId)
+			rights, err = am.GetUserRights(stub, assetId, enrollmentId)
 			if err != nil {
 				// TODO
 			}
 			// TODO add exists
-			response := common.BuildArr(rights)
-			return response.Encode()
+			response = common.BuildArr(exists, rights)
+
 		} else {
-			return nil, errors.New("No such asset " + assetId)
+			rights = make([]common.AssetRight, 0)
+			response = common.BuildArr(false, rights)
 		}
+
+		return response.Encode()
 
 	default:
 		return nil, errors.New("Unrecognized function : " + function)

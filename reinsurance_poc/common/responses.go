@@ -8,6 +8,7 @@ type Response interface {
 }
 
 type AssetRightsResponse struct {
+	Exists bool
 	Rights []AssetRight
 }
 
@@ -28,8 +29,8 @@ func (arr *AssetRightsResponse) Contains(right AssetRight) bool {
 	return false
 }
 
-func BuildArr(rights []AssetRight) AssetRightsResponse {
-	return AssetRightsResponse{Rights: rights}
+func BuildArr(exists bool, rights []AssetRight) AssetRightsResponse {
+	return AssetRightsResponse{Exists: exists, Rights: rights}
 }
 
 type CCNameResponse struct {

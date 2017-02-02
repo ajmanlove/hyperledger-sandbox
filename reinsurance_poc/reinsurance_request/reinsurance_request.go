@@ -75,7 +75,7 @@ func (t *ReinsuranceRequestCC) get_request(stub shim.ChaincodeStubInterface, arg
 	var response common.AssetRightsResponse
 	if err := response.Decode(bytes); err != nil {
 		logger.Error(err)
-		return nil, errors.New("Failed to deserialize AssetRight")
+		return nil, errors.New("Failed to deserialize AssetRightsRespnse")
 	}
 
 	if response.Contains(common.AVIEWER) {

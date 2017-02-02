@@ -11,6 +11,7 @@ import (
 
 	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric/core/util"
 )
 
 var logger = shim.NewLogger("ReinsuranceProposalCC")
@@ -88,7 +89,21 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 		return nil, errors.New("failed to get enrollmentId attribute")
 	}
 	enrollmentId := string(bytes)
-	// TODO does exist and have rights
+
+	invokeArgs := util.ToChaincodeArgs(common.AM_GET_AST_RIGHTS_ARG, enrollmentId, requestId)
+	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
+	var response common.AssetRightsResponse
+	if err := response.Decode(bytes); err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to deserialize AssetRightsRespnse")
+	}
+
+	if !response.Exists {
+		return nil, errors.New("No such request id " + requestId)
+	}
+	if !response.Contains(common.AVIEWER) {
+		return nil, errors.New("Insuffienct rights to propose on request " + requestId)
+	}
 
 	id := t.create_prop_id(requestId)
 	var record common.ReinsuranceBid
@@ -105,16 +120,26 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 
 	encoded, err := record.Encode()
 	if err != nil {
-		// TODO
+		logger.Error(err)
+		return nil, errors.New("Failed to encode ReinsuranceBid record")
 	}
 
 	err = stub.PutState(id, encoded)
 	if err != nil {
-		// TODO
+		logger.Error(err)
+		return nil, errors.New("Failed to put ReinsuranceBid record")
 	}
 
 	// TODO AM rights and management
+	invokeArgs = util.ToChaincodeArgs(common.AM_NEW_BID_ARG, enrollmentId, requestId)
+	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
 
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to manage new proposal asset " + id)
+	}
+
+	logger.Debugf("AM RESPONSE is %s", string(bytes))
 	return nil, nil
 }
 
