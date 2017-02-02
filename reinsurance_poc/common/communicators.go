@@ -5,7 +5,6 @@ import (
 
 	"fmt"
 
-	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/util"
 )
@@ -14,17 +13,17 @@ type AssetManagementCommunicator struct {
 	CCName string
 }
 
-func (a *AssetManagementCommunicator) AssertHasAssetRights(stub shim.ChaincodeStubInterface, assetId string, rights []common.AssetRight) error {
+func (a *AssetManagementCommunicator) AssertHasAssetRights(stub shim.ChaincodeStubInterface, assetId string, rights []AssetRight) error {
 	enrollmentId, err := a.GetEnrollmentAttr(stub)
 	if err != nil {
 		return err
 	}
 
-	invokeArgs := util.ToChaincodeArgs(common.AM_GET_AST_RIGHTS_ARG, enrollmentId, assetId)
+	invokeArgs := util.ToChaincodeArgs(AM_GET_AST_RIGHTS_ARG, enrollmentId, assetId)
 	bytes, err := stub.QueryChaincode(a.CCName, invokeArgs)
-	var response common.AssetRightsResponse
+	var response AssetRightsResponse
 	if err := response.Decode(bytes); err != nil {
-		return nil, fmt.Errorf("Failed to deserialize AssetRightsRespnse due to %s", err)
+		return fmt.Errorf("Failed to deserialize AssetRightsRespnse due to %s", err)
 	}
 
 	if !response.Exists {
@@ -44,7 +43,7 @@ func (a *AssetManagementCommunicator) AssertHasAssetRights(stub shim.ChaincodeSt
 func (a *AssetManagementCommunicator) GetEnrollmentAttr(stub shim.ChaincodeStubInterface) (string, error) {
 	bytes, err := stub.ReadCertAttribute("enrollmentId")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get enrollmentId attribute due to : %s", err)
+		return "", fmt.Errorf("failed to get enrollmentId attribute due to : %s", err)
 	}
 	return string(bytes), nil
 }
