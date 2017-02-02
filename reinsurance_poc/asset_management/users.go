@@ -28,12 +28,12 @@ func (a *UserManager) Init(stub shim.ChaincodeStubInterface) error {
 }
 
 func (a *UserManager) UserRecordExists(stub shim.ChaincodeStubInterface, userId string) (bool, error) {
-	return false, nil
+	existing, err := a.get_record(stub, userId)
+	return len(existing.Columns) > 0, err
 }
 
 func (a *UserManager) GetUserAssetRecord(stub shim.ChaincodeStubInterface, userId string) (common.UserAssetsRecord, error) {
-	var r common.UserAssetsRecord
-	return r, errors.New("Not implemented")
+	return a.get_or_create_record(stub, userId)
 }
 
 func (a *UserManager) SaveUserAssetRecord(stub shim.ChaincodeStubInterface, userId string, record common.UserAssetsRecord) (bool, error) {
@@ -70,17 +70,17 @@ func (a *UserManager) SaveUserAssetRecord(stub shim.ChaincodeStubInterface, user
 	}
 }
 
-func (a *UserManager) get_or_create_record(stub shim.ChaincodeStubInterface, enrollmentId string) (common.UserAssetsRecord, error) {
+func (a *UserManager) get_or_create_record(stub shim.ChaincodeStubInterface, userId string) (common.UserAssetsRecord, error) {
 	var r common.UserAssetsRecord
 
-	existing, err := a.get_record(stub, enrollmentId)
+	existing, err := a.get_record(stub, userId)
 	// TODO use err
 	if len(existing.Columns) > 0 {
 
 		err = r.Decode(existing.Columns[1].GetBytes())
 		if err != nil {
 			logger.Error(err)
-			return r, errors.New("Failed to deserialize user assets record: " + enrollmentId)
+			return r, errors.New("Failed to deserialize user assets record: " + userId)
 		}
 		return r, nil
 	} else {
@@ -89,9 +89,9 @@ func (a *UserManager) get_or_create_record(stub shim.ChaincodeStubInterface, enr
 	}
 }
 
-func (a *UserManager) get_record(stub shim.ChaincodeStubInterface, enrollmentId string) (shim.Row, error) {
+func (a *UserManager) get_record(stub shim.ChaincodeStubInterface, userId string) (shim.Row, error) {
 	var columns []shim.Column
-	col1 := shim.Column{Value: &shim.Column_String_{String_: enrollmentId}}
+	col1 := shim.Column{Value: &shim.Column_String_{String_: userId}}
 	columns = append(columns, col1)
 	return stub.GetRow(assetTable, columns)
 }
