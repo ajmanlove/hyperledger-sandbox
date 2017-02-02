@@ -136,7 +136,7 @@ func (r *ReinsuranceBid) Init() {
 	r.Created = 0
 	r.Updated = 0
 	r.UpdatedBy = ""
-	r.Status = ""
+	r.Status = nil
 }
 
 func (r *ReinsuranceBid) Encode() ([]byte, error) {

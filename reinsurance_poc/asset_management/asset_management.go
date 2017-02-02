@@ -19,6 +19,12 @@ type AssetManagementCC struct {
 func (t *AssetManagementCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init Chaincode...")
 
+	am := AssetManager{}
+	am.init()
+
+	um := UserManager{}
+	um.init()
+
 	if len(args) != 0 {
 		return nil, errors.New("Init does not support arguments")
 	}
@@ -59,6 +65,9 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 			return nil, errors.New("Expects three arguments: ['id', 'requestor', 'requestees,..', 'createDate']")
 		}
 		return t.manage_request(stub, args)
+	case "new_proposal":
+		return nil, errors.New("new_proposal not implemented")
+
 	default:
 		return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
