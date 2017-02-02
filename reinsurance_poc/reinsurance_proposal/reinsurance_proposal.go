@@ -40,13 +40,13 @@ func (t *ReinsuranceProposalCC) Invoke(stub shim.ChaincodeStubInterface, functio
 
 	logger.Debug("enter Invoke")
 	switch function {
-	case "propose":
+	case common.RP_PROPOSE_ARG:
 		return t.propose(stub, args)
-	case "counter":
+	case common.RP_COUNTER_ARG:
 		return nil, errors.New("counter not implemented")
-	case "accept":
+	case common.RP_ACCEPT_ARG:
 		return nil, errors.New("accept not implemented")
-	case "reject":
+	case common.RP_REJECT_ARG:
 		return nil, errors.New("reject not implemented")
 	default:
 		return nil, errors.New("Unrecognized Invoke function : " + function)
@@ -56,7 +56,7 @@ func (t *ReinsuranceProposalCC) Invoke(stub shim.ChaincodeStubInterface, functio
 func (t *ReinsuranceProposalCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	switch function {
-	case "get_proposal":
+	case common.RP_GET_BID_ARG:
 		if len(args) != 1 {
 			return nil, errors.New("get_proposal requires 1 arg ['proposalId']")
 		}

@@ -25,7 +25,7 @@ func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function s
 	logger.Debugf("enter Init, function: [%s], args [%s]", function, args)
 
 	switch function {
-	case "init":
+	case common.INIT_ARG:
 		if len(args) != 1 {
 			return nil, errors.New("Expects chaincode id for asset_management as init arg")
 		}
@@ -40,7 +40,7 @@ func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function s
 func (t *ReinsuranceRequestCC) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debugf("enter Invoke, function: [%s], args [%s]", function, args)
 	switch function {
-	case "submit":
+	case common.RR_SUBMIT_ARG:
 		return t.submit(stub, args)
 	default:
 		return nil, errors.New("Unrecognized Invoke function: " + function)
@@ -50,7 +50,7 @@ func (t *ReinsuranceRequestCC) Invoke(stub shim.ChaincodeStubInterface, function
 func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debugf("enter Query, function: [%s], args [%s]", function, args)
 	switch function {
-	case "get_request":
+	case common.RR_GET_REQ_ARG:
 		if len(args) != 1 {
 			return nil, errors.New("Expected 1 arg, asset id")
 		}

@@ -8,18 +8,12 @@ type Record interface {
 	Init()
 }
 
-type AssetsRecord struct {
-	AssetRights map[string][]AssetRight `json:"assetRights"`
-	Submissions []SubmissionRecord      `json:"submissions"`
-	Requests    []RequestRecord         `json:"requests"`
-	Proposals   []ProposalRecord        `json:"proposals"`
-	Accepted    []AcceptedProposal      `json:"accepted"`
-	Rejected    []RejectedProposal      `json:"rejected"`
-	Contracts   []SubmissionRecord      `json:"contracts"`
+type AssetRecord struct {
+	Rights map[string][]AssetRight `json:"assetRights"`
 }
 
-func (arr *AssetsRecord) ContainsRight(assetId string, right AssetRight) bool {
-	for _, e := range arr.AssetRights[assetId] {
+func (arr *AssetRecord) UserHasRight(enrollId string, right AssetRight) bool {
+	for _, e := range arr.Rights[enrollId] {
 		if e == right {
 			return true
 		}
@@ -27,32 +21,52 @@ func (arr *AssetsRecord) ContainsRight(assetId string, right AssetRight) bool {
 	return false
 }
 
-func (arr *AssetsRecord) GiveRights(assetId string, rights []AssetRight) {
-	if arr.AssetRights[assetId] == nil {
-		arr.AssetRights[assetId] = rights
+func (arr *AssetRecord) AssignUserRights(enrollId string, rights []AssetRight) {
+	if arr.Rights[enrollId] == nil {
+		arr.Rights[enrollId] = rights
 	} else {
 		for _, e := range rights {
-			arr.GiveRight(assetId, e)
+			arr.GiveRight(enrollId, e)
 		}
 	}
 }
 
-func (arr *AssetsRecord) GiveRight(assetId string, right AssetRight) {
-	if arr.ContainsRight(assetId, right) {
-		arr.AssetRights[assetId] = append(arr.AssetRights[assetId], right)
+func (arr *AssetRecord) GiveRight(enrollId string, right AssetRight) {
+	if !arr.UserHasRight(enrollId, right) {
+		arr.Rights[enrollId] = append(arr.Rights[enrollId], right)
 	}
 }
 
-func (r *AssetsRecord) Encode() ([]byte, error) {
+func (r *AssetRecord) Encode() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func (r *AssetsRecord) Decode(bytes []byte) error {
+func (r *AssetRecord) Decode(bytes []byte) error {
 	return json.Unmarshal(bytes, &r)
 }
 
-func (r *AssetsRecord) Init() {
-	r.AssetRights = make(map[string][]AssetRight)
+func (r *AssetRecord) Init() {
+	r.Rights = make(map[string][]AssetRight)
+}
+
+type UserAssetsRecord struct {
+	Submissions []SubmissionRecord `json:"submissions"`
+	Requests    []RequestRecord    `json:"requests"`
+	Proposals   []ProposalRecord   `json:"proposals"`
+	Accepted    []AcceptedProposal `json:"accepted"`
+	Rejected    []RejectedProposal `json:"rejected"`
+	Contracts   []SubmissionRecord `json:"contracts"`
+}
+
+func (r *UserAssetsRecord) Encode() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func (r *UserAssetsRecord) Decode(bytes []byte) error {
+	return json.Unmarshal(bytes, &r)
+}
+
+func (r *UserAssetsRecord) Init() {
 	r.Submissions = make([]SubmissionRecord, 0)
 	r.Requests = make([]RequestRecord, 0)
 	r.Proposals = make([]ProposalRecord, 0)
@@ -136,7 +150,7 @@ func (r *ReinsuranceBid) Init() {
 	r.Created = 0
 	r.Updated = 0
 	r.UpdatedBy = ""
-	r.Status = nil
+	r.Status = ""
 }
 
 func (r *ReinsuranceBid) Encode() ([]byte, error) {
