@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"strings"
+
 	"github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/common"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/util"
@@ -78,6 +80,7 @@ func (t *ReinsuranceProposalCC) Query(stub shim.ChaincodeStubInterface, function
 
 func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
+	logger.Debug("propose() args: " + strings.Join(args, ","))
 	if len(args) != 2 {
 		return nil, errors.New("Requires 2 args: ['requestId', 'contractText']")
 	}
@@ -86,16 +89,21 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 	contractText := args[1]
 	now := get_unix_millisec()
 
+	logger.Debug()
+
+	logger.Debug("get enrollment id")
 	enrollmentId, err := amComm.GetEnrollmentAttr(stub)
 	if err != nil {
 		return nil, err
 	}
 
+	logger.Debug("Asserting rights ...")
 	err = amComm.AssertHasAssetRights(stub, requestId, []common.AssetRight{common.AVIEWER})
 	if err != nil {
 		return nil, err
 	}
 
+	logger.Debug("Creating record...")
 	id := t.create_prop_id(requestId)
 	var record common.ReinsuranceBid
 	record.Init()
