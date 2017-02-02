@@ -84,7 +84,8 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 		ccn := common.CCNameResponse{Name: string(row.Columns[1].GetBytes())}
 		r, err := ccn.Encode()
 		if err != nil {
-			// TODO err
+			logger.Error(err)
+			return nil, errors.New("failed to encode get_cc_name response")
 		}
 		return r, nil
 

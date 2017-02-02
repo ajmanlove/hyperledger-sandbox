@@ -128,6 +128,17 @@ type ReinsuranceBid struct {
 	Status       string `json:"status"`
 }
 
+func (r *ReinsuranceBid) Init() {
+	r.Id = ""
+	r.RequestId = ""
+	r.Bidder = ""
+	r.ContractText = ""
+	r.Created = 0
+	r.Updated = 0
+	r.UpdatedBy = ""
+	r.Status = ""
+}
+
 func (r *ReinsuranceBid) Encode() ([]byte, error) {
 	return json.Marshal(r)
 }
