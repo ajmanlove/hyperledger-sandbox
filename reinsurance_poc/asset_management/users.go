@@ -55,14 +55,14 @@ func (a *UserManager) SaveUserAssetRecord(stub shim.ChaincodeStubInterface, user
 	logger.Debugf("marshalled is [%s]", recordBytes)
 
 	if existing {
-		return stub.InsertRow(assetTable, shim.Row{
+		return stub.InsertRow(userAssetsTable, shim.Row{
 			Columns: []*shim.Column{
 				{Value: &shim.Column_String_{String_: userId}},
 				{Value: &shim.Column_Bytes{Bytes: []byte(recordBytes)}}},
 		})
 
 	} else {
-		return stub.ReplaceRow(assetTable, shim.Row{
+		return stub.ReplaceRow(userAssetsTable, shim.Row{
 			Columns: []*shim.Column{
 				{Value: &shim.Column_String_{String_: userId}},
 				{Value: &shim.Column_Bytes{Bytes: []byte(recordBytes)}}},
@@ -93,5 +93,5 @@ func (a *UserManager) get_record(stub shim.ChaincodeStubInterface, userId string
 	var columns []shim.Column
 	col1 := shim.Column{Value: &shim.Column_String_{String_: userId}}
 	columns = append(columns, col1)
-	return stub.GetRow(assetTable, columns)
+	return stub.GetRow(userAssetsTable, columns)
 }
