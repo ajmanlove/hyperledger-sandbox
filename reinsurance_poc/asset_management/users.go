@@ -29,7 +29,10 @@ func (a *UserManager) Init(stub shim.ChaincodeStubInterface) error {
 
 func (a *UserManager) UserRecordExists(stub shim.ChaincodeStubInterface, userId string) (bool, error) {
 	existing, err := a.get_record(stub, userId)
-	return len(existing.Columns) > 0, err
+	exists := len(existing.Columns) > 0
+
+	logger.Debugf("UserRecordExists() id: %s, %s", userId, exists)
+	return exists, err
 }
 
 func (a *UserManager) GetUserAssetRecord(stub shim.ChaincodeStubInterface, userId string) (common.UserAssetsRecord, error) {
@@ -76,7 +79,7 @@ func (a *UserManager) get_or_create_record(stub shim.ChaincodeStubInterface, use
 	existing, err := a.get_record(stub, userId)
 	// TODO use err
 	if len(existing.Columns) > 0 {
-
+		logger.Debug("Record exists : " + userId)
 		err = r.Decode(existing.Columns[1].GetBytes())
 		if err != nil {
 			logger.Error(err)
@@ -84,6 +87,7 @@ func (a *UserManager) get_or_create_record(stub shim.ChaincodeStubInterface, use
 		}
 		return r, nil
 	} else {
+		logger.Debug("Creating non-existant record : " + userId)
 		r.Init()
 		return r, nil
 	}

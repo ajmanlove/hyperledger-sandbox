@@ -72,7 +72,9 @@ func (a *AssetManager) GetChaincodeName(stub shim.ChaincodeStubInterface, cc_id 
 
 func (a *AssetManager) AssetExists(stub shim.ChaincodeStubInterface, assetId string) (bool, error) {
 	r, err := a.get_table_row(stub, assetId)
-	return len(r.Columns) > 0, err
+	exists := len(r.Columns) > 0
+	logger.Debugf("AssetExists() id: %s, %s", assetId, exists)
+	return exists, err
 }
 
 func (a *AssetManager) AssignRights(stub shim.ChaincodeStubInterface, assetId string, userId string, rights []common.AssetRight) error {
