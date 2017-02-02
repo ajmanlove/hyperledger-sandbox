@@ -218,14 +218,16 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 	}
 
 	var originalReq common.RequestRecord
+	found := false
 	for _, request := range record.Requests {
 		if request.SubmissionId == requestId {
 			originalReq = request
+			found = true
 			break
 		}
 	}
 
-	if originalReq == nil {
+	if found == nil {
 		return nil, fmt.Errorf("IllegalState user %s has no request asset %s", bidder, requestId)
 	}
 
