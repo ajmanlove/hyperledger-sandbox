@@ -90,7 +90,7 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 			return nil, errors.New("failed to get enrollmentId attribute")
 		}
 		enrollmentId := string(bytes)
-		record, err := am.GetAssetRecord(stub, enrollmentId)
+		record, err := um.GetUserAssetRecord(stub, enrollmentId)
 		if err != nil {
 			return nil, err
 		}
