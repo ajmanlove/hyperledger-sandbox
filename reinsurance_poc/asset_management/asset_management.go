@@ -227,7 +227,7 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 		}
 	}
 
-	if found == nil {
+	if !found {
 		return nil, fmt.Errorf("IllegalState user %s has no request asset %s", bidder, requestId)
 	}
 
