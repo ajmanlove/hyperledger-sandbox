@@ -119,7 +119,7 @@ func (t *AssetManagementCC) Query(stub shim.ChaincodeStubInterface, function str
 		}
 
 		var rights []common.AssetRight
-		var response common.Response
+		var response common.AssetRightsResponse
 		if exists {
 			rights, err = am.GetUserRights(stub, assetId, enrollmentId)
 			if err != nil {
