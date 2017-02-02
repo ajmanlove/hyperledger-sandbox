@@ -135,16 +135,18 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 
 func (t *ReinsuranceProposalCC) get_proposal(stub shim.ChaincodeStubInterface, propId string) (common.ReinsuranceBid, error) {
 	// Rights
+	var r common.ReinsuranceBid
+
 	err := amComm.AssertHasAssetRights(stub, propId, []common.AssetRight{common.AVIEWER})
 	if err != nil {
-		return nil, err
+		return r, err
 	}
 
 	existing, err := stub.GetState(propId)
 	if err != nil {
 		// TODO
 	}
-	var r common.ReinsuranceBid
+
 	if existing != nil {
 		err = r.Decode(existing)
 		if err != nil {
