@@ -99,6 +99,7 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 	}
 
 	if !response.Exists {
+		logger.Error("No such request id " + requestId)
 		return nil, errors.New("No such request id " + requestId)
 	}
 	if !response.Contains(common.AVIEWER) {
@@ -132,7 +133,7 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 
 	// TODO AM rights and management
 	invokeArgs = util.ToChaincodeArgs(common.AM_NEW_BID_ARG, enrollmentId, requestId)
-	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
+	bytes, err = stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 
 	if err != nil {
 		logger.Error(err)
