@@ -205,6 +205,9 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 //	UpdatedBy    string `json:"updatedBy"`
 //}
 func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 4 {
+		return nil, errors.New("Expects 4 args ['proposalId', 'requestId', 'bidder', 'createDate']")
+	}
 	proposalId := args[0]
 	requestId := args[1]
 	bidder := args[2]

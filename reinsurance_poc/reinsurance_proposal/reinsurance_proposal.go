@@ -131,8 +131,7 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 		return nil, errors.New("Failed to put ReinsuranceBid record")
 	}
 
-	// TODO AM rights and management
-	invokeArgs = util.ToChaincodeArgs(common.AM_NEW_BID_ARG, enrollmentId, requestId)
+	invokeArgs = util.ToChaincodeArgs(common.AM_NEW_BID_ARG, id, requestId, enrollmentId, fmt.Sprintf("%d", now))
 	bytes, err = stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 
 	if err != nil {
