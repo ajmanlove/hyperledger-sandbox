@@ -18,6 +18,8 @@ var assetManagementCCId = ""
 var counter uint64 = 0
 var submissionPrefix = "REQ"
 
+var amComm = common.AssetManagementCommunicator{}
+
 type ReinsuranceRequestCC struct {
 }
 
@@ -30,6 +32,7 @@ func (t *ReinsuranceRequestCC) Init(stub shim.ChaincodeStubInterface, function s
 			return nil, errors.New("Expects chaincode id for asset_management as init arg")
 		}
 		assetManagementCCId = args[0]
+		amComm.CCName = assetManagementCCId
 		return nil, nil
 	default:
 		return nil, errors.New("Unrecognized Init function: " + function)
@@ -62,26 +65,12 @@ func (t *ReinsuranceRequestCC) Query(stub shim.ChaincodeStubInterface, function 
 
 func (t *ReinsuranceRequestCC) get_request(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	requestId := args[0]
-	bytes, err := stub.ReadCertAttribute("enrollmentId")
+	err := amComm.AssertHasAssetRights(stub, requestId, []common.AssetRight{common.AVIEWER})
 	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("failed to get enrollmentId attribute")
-	}
-	enrollmentId := string(bytes)
-
-	invokeArgs := util.ToChaincodeArgs("get_asset_rights", enrollmentId, requestId)
-	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
-
-	var response common.AssetRightsResponse
-	if err := response.Decode(bytes); err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to deserialize AssetRightsRespnse")
-	}
-
-	if response.Contains(common.AVIEWER) {
-		return stub.GetState(requestId) // TODO visibility
+		return nil, err
 	} else {
-		return nil, errors.New("Insufficient rights to view this asset, enrollment id " + enrollmentId)
+		return stub.GetState(requestId) // TODO visibility
+
 	}
 }
 
@@ -133,7 +122,7 @@ func (t *ReinsuranceRequestCC) submit(stub shim.ChaincodeStubInterface, args []s
 	}
 
 	// Note with asset management
-	invokeArgs := util.ToChaincodeArgs("new_request", id, requestor, strings.Join(requestees, ","), fmt.Sprintf("%d", now))
+	invokeArgs := util.ToChaincodeArgs(common.AM_NEW_REQ_ARG, id, requestor, strings.Join(requestees, ","), fmt.Sprintf("%d", now))
 	response, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 	if err != nil {
 		logger.Error(err)
