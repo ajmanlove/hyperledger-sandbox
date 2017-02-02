@@ -26,6 +26,8 @@ type ReinsuranceProposalCC struct {
 type ReinsuranceProposal struct {
 }
 
+var amComm = common.AssetManagementCommunicator{}
+
 func (t *ReinsuranceProposalCC) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Debug("Init()")
 
@@ -83,27 +85,15 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 	requestId := args[0]
 	contractText := args[1]
 	now := get_unix_millisec()
-	bytes, err := stub.ReadCertAttribute("enrollmentId")
+
+	enrollmentId, err := amComm.GetEnrollmentAttr(stub)
 	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("failed to get enrollmentId attribute")
-	}
-	enrollmentId := string(bytes)
-
-	invokeArgs := util.ToChaincodeArgs(common.AM_GET_AST_RIGHTS_ARG, enrollmentId, requestId)
-	bytes, err = stub.QueryChaincode(assetManagementCCId, invokeArgs)
-	var response common.AssetRightsResponse
-	if err := response.Decode(bytes); err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to deserialize AssetRightsRespnse")
+		return nil, err
 	}
 
-	if !response.Exists {
-		logger.Error("No such request id " + requestId)
-		return nil, errors.New("No such request id " + requestId)
-	}
-	if !response.Contains(common.AVIEWER) {
-		return nil, errors.New("Insuffienct rights to propose on request " + requestId)
+	err = amComm.AssertHasAssetRights(stub, requestId, []common.AssetRight{common.AVIEWER})
+	if err != nil {
+		return nil, err
 	}
 
 	id := t.create_prop_id(requestId)
@@ -131,8 +121,8 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 		return nil, errors.New("Failed to put ReinsuranceBid record")
 	}
 
-	invokeArgs = util.ToChaincodeArgs(common.AM_NEW_BID_ARG, id, requestId, enrollmentId, fmt.Sprintf("%d", now))
-	bytes, err = stub.InvokeChaincode(assetManagementCCId, invokeArgs)
+	invokeArgs := util.ToChaincodeArgs(common.AM_NEW_BID_ARG, id, requestId, enrollmentId, fmt.Sprintf("%d", now))
+	bytes, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
 
 	if err != nil {
 		logger.Error(err)
@@ -144,6 +134,12 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 }
 
 func (t *ReinsuranceProposalCC) get_proposal(stub shim.ChaincodeStubInterface, propId string) (common.ReinsuranceBid, error) {
+	// Rights
+	err := amComm.AssertHasAssetRights(stub, propId, []common.AssetRight{common.AVIEWER})
+	if err != nil {
+		return nil, err
+	}
+
 	existing, err := stub.GetState(propId)
 	if err != nil {
 		// TODO

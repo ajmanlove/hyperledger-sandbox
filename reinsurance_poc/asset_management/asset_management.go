@@ -241,7 +241,7 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 		return nil, errors.New("Failed to save record for id " + bidder)
 	}
 
-	err = am.AssignRights(stub, proposalId, bidder, []common.AssetRight{common.AOWNER, common.AVIEWER})
+	err = am.AssignRights(stub, proposalId, bidder, []common.AssetRight{common.AOWNER, common.AVIEWER, common.AUPDATER})
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to assign rights to id " + bidder)
@@ -267,7 +267,7 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 		return nil, errors.New("Failed to save record for id " + bidder)
 	}
 
-	err = am.AssignRights(stub, proposalId, originalReq.Requestor, []common.AssetRight{common.AVIEWER, common.AAPPROVAL})
+	err = am.AssignRights(stub, proposalId, originalReq.Requestor, []common.AssetRight{common.AVIEWER, common.AAPPROVAL, common.AUPDATER})
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to assign rights to id " + bidder)

@@ -6,6 +6,7 @@ const (
 	AOWNER    AssetRight = 0
 	AVIEWER   AssetRight = 1
 	AAPPROVAL AssetRight = 2
+	AUPDATER  AssetRight = 3
 )
 
 const (
