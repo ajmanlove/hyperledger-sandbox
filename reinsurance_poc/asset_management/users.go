@@ -49,7 +49,7 @@ func (a *UserManager) SaveUserAssetRecord(stub shim.ChaincodeStubInterface, user
 		return false, errors.New("Failed to serialize record")
 	}
 
-	existing, err := a.UserRecordExists(stub, userId)
+	exists, err := a.UserRecordExists(stub, userId)
 	if err != nil {
 		logger.Error(err)
 		return false, errors.New("Failed to get record for enrollment id : " + userId)
@@ -57,7 +57,7 @@ func (a *UserManager) SaveUserAssetRecord(stub shim.ChaincodeStubInterface, user
 
 	logger.Debugf("marshalled is [%s]", recordBytes)
 
-	if existing {
+	if !exists {
 		return stub.InsertRow(userAssetsTable, shim.Row{
 			Columns: []*shim.Column{
 				{Value: &shim.Column_String_{String_: userId}},
