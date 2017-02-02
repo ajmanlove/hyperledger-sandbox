@@ -56,7 +56,7 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 		}
 		return t.manage_request(stub, args)
 	case common.AM_NEW_BID_ARG:
-		return nil, errors.New("new_proposal not implemented")
+		return t.manage_proposal(stub, args)
 
 	default:
 		return nil, errors.New("Unrecognized Invoke function: " + function)
@@ -195,6 +195,76 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 	}
 
 	return nil, err
+}
+
+//type ProposalRecord struct {
+//	SubmissionId string `json:"submissionId"`
+//	ProposalId   string `json:"proposalId"`
+//	Created      uint64 `json:"created"`
+//	Updated      uint64 `json:"updated"`
+//	UpdatedBy    string `json:"updatedBy"`
+//}
+func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	proposalId := args[0]
+	requestId := args[1]
+	bidder := args[2]
+	//requestor := args[]
+	// TODO parse err
+	createDate, err := strconv.ParseUint(args[3], 10, 64)
+
+	record, err := um.GetUserAssetRecord(stub, bidder)
+	if err != nil {
+		return nil, err
+	}
+
+	var originalReq common.RequestRecord
+	for _, request := range record.Requests {
+		if request.SubmissionId == requestId {
+			originalReq = request
+			break
+		}
+	}
+
+	if originalReq == nil {
+		return nil, fmt.Errorf("IllegalState user %s has no request asset %s", bidder, requestId)
+	}
+
+	record.Proposals = append(
+		record.Proposals,
+		common.ProposalRecord{
+			SubmissionId: requestId,
+			ProposalId:   proposalId,
+			Created:      createDate,
+			Updated:      createDate,
+			UpdatedBy:    bidder,
+		})
+	_, err = um.SaveUserAssetRecord(stub, bidder, record)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to save record for id " + bidder)
+	}
+
+	record, err = um.GetUserAssetRecord(stub, originalReq.Requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	record.Proposals = append(
+		record.Proposals,
+		common.ProposalRecord{
+			SubmissionId: requestId,
+			ProposalId:   proposalId,
+			Created:      createDate,
+			Updated:      createDate,
+			UpdatedBy:    bidder,
+		})
+	_, err = um.SaveUserAssetRecord(stub, bidder, record)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to save record for id " + bidder)
+	}
+
+	return nil, nil
 }
 
 // ============================================================================================================================
