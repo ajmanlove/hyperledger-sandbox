@@ -106,7 +106,7 @@ type AcceptedProposal struct {
 type RejectedProposal struct {
 	SubmissionId string `json:"submissionId"`
 	ProposalId   string `json:"proposalId"`
-	Rejected     uint64 `json:"accepted"`
+	Rejected     uint64 `json:"rejected"`
 }
 
 type ReinsuranceRequest struct {
