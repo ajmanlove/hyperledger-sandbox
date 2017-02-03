@@ -145,7 +145,6 @@ type ReinsuranceBid struct {
 func (r *ReinsuranceBid) Init() {
 	r.Id = ""
 	r.RequestId = ""
-	r.Requestor = ""
 	r.Bidder = ""
 	r.ContractText = ""
 	r.Created = 0
