@@ -285,9 +285,9 @@ func (t *AssetManagementCC) manage_counter(stub shim.ChaincodeStubInterface, arg
 	}
 
 	proposalId := args[0]
-	updater := args[2]
+	updater := args[1]
 	// TODO parse err
-	updated, err := strconv.ParseUint(args[3], 10, 64)
+	updated, err := strconv.ParseUint(args[2], 10, 64)
 
 	record, err := um.GetUserAssetRecord(stub, updater)
 	if err != nil {
