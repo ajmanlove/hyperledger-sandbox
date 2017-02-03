@@ -353,20 +353,29 @@ func (t *AssetManagementCC) manage_accept(stub shim.ChaincodeStubInterface, args
 			return nil, fmt.Errorf("Failed to get user asset record %s due to : %s", k, err)
 		}
 
-		//type AcceptedProposal struct {
-		//	SubmissionId string `json:"submissionId"`
-		//	ProposalId   string `json:"proposalId"`
-		//	Accepted     uint64 `json:"accepted"`
-		//}
+		proposal, ok := userR.Proposals[proposalId]
+		if !ok {
+			return nil, fmt.Errorf("No proposal asset %s for user %s", proposalId, k)
+		}
+
 		userR.Accepted[proposalId] = common.AcceptedProposal{
-			SubmissionId: "",
+			SubmissionId: proposal.SubmissionId,
 			ProposalId:   proposalId,
 			Accepted:     updated,
 		}
 
+		delete(userR.Proposals, proposalId)
+		delete(userR.Submissions, proposal.SubmissionId)
+		delete(userR.Requests, proposal.SubmissionId)
+
+		_, err = um.SaveUserAssetRecord(stub, k, userR)
+		if err != nil {
+			logger.Error(err)
+			return nil, errors.New("Failed to save record for id " + k)
+		}
 	}
 
-	return nil, errors.New("mange_accept not implemented")
+	return nil, nil
 }
 
 func (t *AssetManagementCC) manage_reject(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -374,11 +383,45 @@ func (t *AssetManagementCC) manage_reject(stub shim.ChaincodeStubInterface, args
 		return nil, errors.New("Expects 2 args ['proposalId', 'date']")
 	}
 
-	//proposalId := args[0]
-	//// TODO parse err
-	//updated, err := strconv.ParseUint(args[1], 10, 64)
+	proposalId := args[0]
+	// TODO parse err
+	updated, err := strconv.ParseUint(args[1], 10, 64)
 
-	return nil, errors.New("manage_reject not implemented")
+	astR, err := am.GetAssetRecord(stub, proposalId)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get asset record %s due to : %s", proposalId, err)
+	}
+
+	for k := range astR.Rights {
+		userR, err := um.GetUserAssetRecord(stub, k)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get user asset record %s due to : %s", k, err)
+		}
+
+		proposal, ok := userR.Proposals[proposalId]
+		if !ok {
+			return nil, fmt.Errorf("No proposal asset %s for user %s", proposalId, k)
+		}
+
+		userR.Rejected[proposalId] = common.RejectedProposal{
+			SubmissionId: proposal.SubmissionId,
+			ProposalId:   proposalId,
+			Rejected:     updated,
+		}
+
+		delete(userR.Proposals, proposalId)
+		delete(userR.Requests, proposal.SubmissionId)
+
+		_, err = um.SaveUserAssetRecord(stub, k, userR)
+		if err != nil {
+			logger.Error(err)
+			return nil, errors.New("Failed to save record for id " + k)
+		}
+
+		// TODO revoke rights on the original submission?
+	}
+
+	return nil, nil
 }
 
 // ============================================================================================================================
