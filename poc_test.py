@@ -1,4 +1,5 @@
 import os
+import os.path
 from subprocess import check_call
 import sys
 from hyperledger.client import Client
@@ -6,7 +7,8 @@ from hyperledger.client import Client
 import requests
 import json
 
-import time
+
+import configparser
 
 setup_hl_creds = ("test_user0", "MS9qrN8hFjlE")
 insurer1_hl_creds = ("insurer1", "iF6bJY5sWumg")
@@ -15,37 +17,72 @@ reinsurer2_hl_creds = ("reinsurer2", "RmMio3LCk37J")
 insurer2_hl_creds = ("insurer2", "1wtM0CXjIVXr")
 reinsurer3_hl_creds = ("reinsurer3", "atjQRL2S6FJx")
 
-def start():
-    print("Setting up poc environment...")
-    setup_docker()
+def system_test():
+    if not os.path.exists(".setup.ini"):
+        print("poc_test requires the .setup.ini file written by setup_poc.py")
+        exit(1)
 
-    init_hyperledger()
+    config = configparser.ConfigParser()
+    config.read('.setup.ini')
+    print(config.sections())
 
-## TODO get container ids
-def setup_docker():
-    print("Building docker images...")
+    c = Client(base_url="http://127.0.0.1:7050")
 
-    path = "docker/build/poc_fabric_membersrvc"
-    print("Changin dir to ", path)
-    os.chdir(path)
-    check_call("./build.sh", shell=True)
+    submit(config, c)
 
-    path = "../poc_fabric_peer"
-    print("Changin dir to ", path)
-    os.chdir(path)
-    check_call("./build.sh", shell=True)
+    print("Not implemented")
+    exit(1)
 
-    print("Building docker images...COMPLETE")
+def submit(config, client):
+    data = {
+        "jsonrpc": "2.0",
+        "method": "invoke",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config['CHAINCODE']['reinsurance_request']
+            },
+            "ctorMsg": {
+                "function": "submit",
+                "args": [
+                    "reinsurer1,reinsurer2", "2e1b1b0cb7bfce4cf47706752a234f29", "http://mybucket.s3-website-us-east-1.amazonaws.com/", "some excel contract text here", "CREATE ABSTRACT TABLE insuredItem (foo INT);", "1"
+                ]
+            },
+            "secureContext": "insurer1",
+            "attributes": ["enrollmentId"]
+        },
+        "id": 1
+    }
 
-    print("Starting docker environment ...")
-    os.chdir("../../")
-    check_call("pwd", shell=True)
-    check_call("docker-compose up -d", shell=True)
+    post(data)
 
-    time.sleep(10)
 
-    os.chdir("../")
-    print("Docker environment setup COMPLETE")
+    print("submit()")
+
+def propose():
+    print("propose()")
+
+def counter():
+    print("counter()")
+
+def accept():
+    print("accept()")
+
+def reject():
+    print("reject()")
+
+def post(data):
+    data_json = json.dumps(data)
+    headers = {'Content-type': 'application/json'}
+    response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
+
+    print("RESPONSE : ", response)
+
+    if response.status_code != 200:
+        print("Unexpected status code in registrar " + response.status_code)
+        exit(1)
+
+    print("Response JSON " + response.text)
 
 def init_hyperledger():
     print("Initializing hyperledger environment...")
@@ -85,15 +122,6 @@ def init_hyperledger():
 
     register_cc(asset_cc_name, setup_hl_creds[0], request_cc_name, "reinsurance_request")
     register_cc(asset_cc_name, setup_hl_creds[0], proposal_cc_name, "reinsurance_proposal")
-
-    print("Writing setup meta file...")
-    f = open(".setup.ini", 'w')
-    f.write("[CHAINCODE]\n")
-    f.write("asset_management={0}\n".format(asset_cc_name))
-    f.write("reinsurance_request={0}\n".format(request_cc_name))
-    f.write("reinsurance_proposal={0}\n".format(proposal_cc_name))
-    f.close()
-    print("Done writing setup meta file")
 
     print("")
     print("-----------------------------------------------------------")
@@ -136,36 +164,6 @@ def register_cc(am_name, user, cc_name, identifier):
 
     print("Response JSON " + response.text)
 
-# def enroll_user(enroll_cc_name, user):
-#     data = {
-#       "jsonrpc": "2.0",
-#       "method": "invoke",
-#       "params": {
-#         "type": 1,
-#         "chaincodeID": {
-#           "name": enroll_cc_name
-#         },
-#         "ctorMsg": {
-#           "function": "enroll",
-#           "args": []
-#         },
-#         "secureContext": user,
-#         "attributes": ["enrollmentId", "contact"]
-#       },
-#       "id": 3
-#     }
-#
-#     data_json = json.dumps(data)
-#     headers = {'Content-type': 'application/json'}
-#     response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
-#
-#     print("RESPONSE : ", response)
-#
-#     if response.status_code != 200:
-#         print("Unexpected status code in registrar " + r.status_code)
-#         exit(1)
-#
-#     print("Response JSON " + response.text)
 
 def deploy_chaincode(client, user, path, args):
     print("Deploying chaincode {} with args {}".format(path, args))
@@ -209,9 +207,6 @@ def register_hl_user(user, key):
 def stop():
     print("Tearing down poc environment...")
     teardown_docker()
-    if os.path.exists(".setup.ini"):
-        os.remove(".setup.ini")
-
     print("Docker teardown COMPLETE")
 
 
@@ -221,8 +216,7 @@ def teardown_docker():
     check_call("docker-compose rm -f", shell=True)
 
 commands = {
-    "start" : start,
-    "stop" : stop
+    "system_test" : system_test,
 }
 
 if __name__ == '__main__':

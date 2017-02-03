@@ -21,6 +21,8 @@ const (
 	AM_NEW_REQ_ARG        = "new_request"
 	AM_NEW_BID_ARG        = "new_proposal"
 	AM_NEW_CNTR_ARG       = "new_counter"
+	AM_ACCEPT_ARG         = "accepted_proposal"
+	AM_REJECT_ARG         = "rejected_proposal"
 	AM_GET_CC_NAME_ARG    = "get_cc_name"
 	AM_GET_U_ASST_ARG     = "get_user_assets"
 	AM_GET_AST_RIGHTS_ARG = "get_asset_rights"

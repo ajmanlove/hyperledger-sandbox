@@ -61,6 +61,11 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 	case common.AM_NEW_CNTR_ARG:
 		return t.manage_counter(stub, args)
 
+	case common.AM_ACCEPT_ARG:
+		return t.manage_accept(stub, args)
+
+	case common.AM_REJECT_ARG:
+		return t.manage_reject(stub, args)
 	default:
 		return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
@@ -158,14 +163,13 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 	// TODO err
 	err = am.AssignRights(stub, requestId, requestor, []common.AssetRight{common.AOWNER, common.AVIEWER})
 
-	record.Submissions = append(
-		record.Submissions,
-		common.SubmissionRecord{
-			SubmissionId: requestId,
-			Requestees:   requestees,
-			Created:      createDate,
-			Updated:      createDate,
-		})
+	record.Submissions[requestId] = common.SubmissionRecord{
+		SubmissionId: requestId,
+		Requestees:   requestees,
+		Created:      createDate,
+		Updated:      createDate,
+	}
+
 	_, err = um.SaveUserAssetRecord(stub, requestor, record)
 	if err != nil {
 		logger.Error(err)
@@ -178,14 +182,12 @@ func (t *AssetManagementCC) manage_request(stub shim.ChaincodeStubInterface, arg
 			return nil, err
 		}
 
-		record.Requests = append(
-			record.Requests,
-			common.RequestRecord{
-				SubmissionId: requestId,
-				Requestor:    requestor,
-				Created:      createDate,
-				Updated:      createDate,
-			})
+		record.Requests[requestId] = common.RequestRecord{
+			SubmissionId: requestId,
+			Requestor:    requestor,
+			Created:      createDate,
+			Updated:      createDate,
+		}
 
 		// TODO err
 		err = am.AssignRights(stub, requestId, requestee, []common.AssetRight{common.AVIEWER})
@@ -215,29 +217,19 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 		return nil, err
 	}
 
-	var originalReq common.RequestRecord
-	found := false
-	for _, request := range record.Requests {
-		if request.SubmissionId == requestId {
-			originalReq = request
-			found = true
-			break
-		}
-	}
-
-	if !found {
+	originalReq, ok := record.Requests[requestId]
+	if !ok {
 		return nil, fmt.Errorf("IllegalState user %s has no request asset %s", bidder, requestId)
 	}
 
-	record.Proposals = append(
-		record.Proposals,
-		common.ProposalRecord{
-			SubmissionId: requestId,
-			ProposalId:   proposalId,
-			Created:      createDate,
-			Updated:      createDate,
-			UpdatedBy:    bidder,
-		})
+	record.Proposals[proposalId] = common.ProposalRecord{
+		SubmissionId: requestId,
+		ProposalId:   proposalId,
+		Created:      createDate,
+		Updated:      createDate,
+		UpdatedBy:    bidder,
+	}
+
 	_, err = um.SaveUserAssetRecord(stub, bidder, record)
 	if err != nil {
 		logger.Error(err)
@@ -255,15 +247,14 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 		return nil, err
 	}
 
-	record.Proposals = append(
-		record.Proposals,
-		common.ProposalRecord{
-			SubmissionId: requestId,
-			ProposalId:   proposalId,
-			Created:      createDate,
-			Updated:      createDate,
-			UpdatedBy:    bidder,
-		})
+	record.Proposals[proposalId] = common.ProposalRecord{
+		SubmissionId: requestId,
+		ProposalId:   proposalId,
+		Created:      createDate,
+		Updated:      createDate,
+		UpdatedBy:    bidder,
+	}
+
 	_, err = um.SaveUserAssetRecord(stub, originalReq.Requestor, record)
 	if err != nil {
 		logger.Error(err)
@@ -294,16 +285,8 @@ func (t *AssetManagementCC) manage_counter(stub shim.ChaincodeStubInterface, arg
 		return nil, err
 	}
 
-	var prop common.ProposalRecord
-	found := false
-	for _, proposal := range record.Proposals {
-		if proposal.ProposalId == proposalId {
-			prop = proposal
-			found = true
-			break
-		}
-	}
-	if !found {
+	prop, ok := record.Proposals[proposalId]
+	if !ok {
 		return nil, fmt.Errorf("No propsal record %s for user %s", proposalId, updater)
 	}
 
@@ -348,6 +331,54 @@ func (t *AssetManagementCC) manage_counter(stub shim.ChaincodeStubInterface, arg
 	}
 
 	return nil, nil
+}
+
+func (t *AssetManagementCC) manage_accept(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, errors.New("Expects 2 args ['proposalId', 'date']")
+	}
+
+	proposalId := args[0]
+	// TODO parse err
+	updated, err := strconv.ParseUint(args[1], 10, 64)
+
+	astR, err := am.GetAssetRecord(stub, proposalId)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get asset record %s due to : %s", proposalId, err)
+	}
+
+	for k := range astR.Rights {
+		userR, err := um.GetUserAssetRecord(stub, k)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get user asset record %s due to : %s", k, err)
+		}
+
+		//type AcceptedProposal struct {
+		//	SubmissionId string `json:"submissionId"`
+		//	ProposalId   string `json:"proposalId"`
+		//	Accepted     uint64 `json:"accepted"`
+		//}
+		userR.Accepted[proposalId] = common.AcceptedProposal{
+			SubmissionId: "",
+			ProposalId:   proposalId,
+			Accepted:     updated,
+		}
+
+	}
+
+	return nil, errors.New("mange_accept not implemented")
+}
+
+func (t *AssetManagementCC) manage_reject(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, errors.New("Expects 2 args ['proposalId', 'date']")
+	}
+
+	//proposalId := args[0]
+	//// TODO parse err
+	//updated, err := strconv.ParseUint(args[1], 10, 64)
+
+	return nil, errors.New("manage_reject not implemented")
 }
 
 // ============================================================================================================================

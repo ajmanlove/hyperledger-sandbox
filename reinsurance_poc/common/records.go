@@ -50,12 +50,12 @@ func (r *AssetRecord) Init() {
 }
 
 type UserAssetsRecord struct {
-	Submissions []SubmissionRecord `json:"submissions"`
-	Requests    []RequestRecord    `json:"requests"`
-	Proposals   []ProposalRecord   `json:"proposals"`
-	Accepted    []AcceptedProposal `json:"accepted"`
-	Rejected    []RejectedProposal `json:"rejected"`
-	Contracts   []SubmissionRecord `json:"contracts"`
+	Submissions map[string]SubmissionRecord `json:"submissions"`
+	Requests    map[string]RequestRecord    `json:"requests"`
+	Proposals   map[string]ProposalRecord   `json:"proposals"`
+	Accepted    map[string]AcceptedProposal `json:"accepted"`
+	Rejected    map[string]RejectedProposal `json:"rejected"`
+	Contracts   map[string]SubmissionRecord `json:"contracts"`
 }
 
 func (r *UserAssetsRecord) Encode() ([]byte, error) {
@@ -67,12 +67,12 @@ func (r *UserAssetsRecord) Decode(bytes []byte) error {
 }
 
 func (r *UserAssetsRecord) Init() {
-	r.Submissions = make([]SubmissionRecord, 0)
-	r.Requests = make([]RequestRecord, 0)
-	r.Proposals = make([]ProposalRecord, 0)
-	r.Accepted = make([]AcceptedProposal, 0)
-	r.Rejected = make([]RejectedProposal, 0)
-	r.Contracts = make([]SubmissionRecord, 0)
+	r.Submissions = make(map[string]SubmissionRecord, 0)
+	r.Requests = make(map[string]RequestRecord, 0)
+	r.Proposals = make(map[string]ProposalRecord, 0)
+	r.Accepted = make(map[string]AcceptedProposal, 0)
+	r.Rejected = make(map[string]RejectedProposal, 0)
+	r.Contracts = make(map[string]SubmissionRecord, 0)
 }
 
 type SubmissionRecord struct {

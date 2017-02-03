@@ -8,3 +8,4 @@ simple_contract_table/simple_contract_table
 simple_listener/simple_listener
 .idea
 *.iml
+.setup.ini
