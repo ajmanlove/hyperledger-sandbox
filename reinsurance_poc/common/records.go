@@ -134,6 +134,7 @@ func (r *ReinsuranceRequest) Decode(bytes []byte) error {
 type ReinsuranceBid struct {
 	Id           string `json:"id"`
 	RequestId    string `json:"requestId"`
+	Requestor    string `json:"requestor"`
 	Bidder       string `json:"bidder"`
 	ContractText string `json:"contractText"`
 	Created      uint64 `json:"created"`
@@ -145,6 +146,7 @@ type ReinsuranceBid struct {
 func (r *ReinsuranceBid) Init() {
 	r.Id = ""
 	r.RequestId = ""
+	r.Requestor = ""
 	r.Bidder = ""
 	r.ContractText = ""
 	r.Created = 0

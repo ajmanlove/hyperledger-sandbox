@@ -49,7 +49,7 @@ func (t *ReinsuranceProposalCC) Invoke(stub shim.ChaincodeStubInterface, functio
 	case common.RP_PROPOSE_ARG:
 		return t.propose(stub, args)
 	case common.RP_COUNTER_ARG:
-		return nil, errors.New("counter not implemented")
+		return t.counter(stub, args)
 	case common.RP_ACCEPT_ARG:
 		return nil, errors.New("accept not implemented")
 	case common.RP_REJECT_ARG:
@@ -118,16 +118,9 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 	record.UpdatedBy = enrollmentId
 	record.Status = "bid" // TODO
 
-	encoded, err := record.Encode()
+	err = t.save_record(stub, id, record)
 	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to encode ReinsuranceBid record")
-	}
-
-	err = stub.PutState(id, encoded)
-	if err != nil {
-		logger.Error(err)
-		return nil, errors.New("Failed to put ReinsuranceBid record")
+		return nil, err
 	}
 
 	invokeArgs := util.ToChaincodeArgs(common.AM_NEW_BID_ARG, id, requestId, enrollmentId, fmt.Sprintf("%d", now))
@@ -142,6 +135,54 @@ func (t *ReinsuranceProposalCC) propose(stub shim.ChaincodeStubInterface, args [
 	return nil, nil
 }
 
+func (t *ReinsuranceProposalCC) counter(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	logger.Debug("counter() args: " + strings.Join(args, ","))
+	if len(args) != 2 {
+		return nil, errors.New("Requires 2 args: ['proposalId', 'contractText']")
+	}
+	proposalId := args[0]
+	contractText := args[1]
+	now := get_unix_millisec()
+	enrollmentId, err := amComm.GetEnrollmentAttr(stub)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Asserting rights ...")
+	err = amComm.AssertHasAssetRights(stub, proposalId, []common.AssetRight{common.AVIEWER, common.AUPDATER})
+	if err != nil {
+		return nil, err
+	}
+
+	record, err := t.get_proposal(stub, proposalId)
+	if err != nil {
+		logger.Error(err)
+		return nil, fmt.Errorf("Failed to get proposal %s due to : %s", proposalId, err)
+	}
+
+	record.ContractText = contractText
+	record.Updated = now
+	record.UpdatedBy = enrollmentId
+	record.Status = "counter" // TODO
+
+	err = t.save_record(stub, proposalId, record)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO am
+	invokeArgs := util.ToChaincodeArgs(common.AM_NEW_CNTR_ARG, proposalId, enrollmentId, fmt.Sprintf("%d", now))
+	bytes, err := stub.InvokeChaincode(assetManagementCCId, invokeArgs)
+
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to manage new counter asset " + proposalId)
+	}
+	logger.Debugf("AM RESPONSE is %s", string(bytes)) // TODO
+
+	return nil, nil
+}
+
 func (t *ReinsuranceProposalCC) get_proposal(stub shim.ChaincodeStubInterface, propId string) (common.ReinsuranceBid, error) {
 	// Rights
 	var r common.ReinsuranceBid
@@ -153,18 +194,36 @@ func (t *ReinsuranceProposalCC) get_proposal(stub shim.ChaincodeStubInterface, p
 
 	existing, err := stub.GetState(propId)
 	if err != nil {
-		// TODO
+		logger.Error(err)
+		return r, errors.New("Failed to get proposal record " + propId)
 	}
 
 	if existing != nil {
 		err = r.Decode(existing)
 		if err != nil {
-			// TODO
+			logger.Error(err)
+			return r, errors.New("Failed to decode proposal record " + propId)
 		}
 		return r, nil
 	} else {
 		return r, errors.New("No such proposal : " + propId)
 	}
+}
+
+func (t *ReinsuranceProposalCC) save_record(stub shim.ChaincodeStubInterface, id string, record common.ReinsuranceBid) error {
+	encoded, err := record.Encode()
+	if err != nil {
+		logger.Error(err)
+		return fmt.Errorf("Failed to encode ReinsuranceBid record due to %s", err)
+	}
+
+	err = stub.PutState(id, encoded)
+	if err != nil {
+		logger.Error(err)
+		return fmt.Errorf("Failed to put ReinsuranceBid record due to : %s", err)
+	}
+
+	return nil
 }
 
 // TODO use stateful batching in case of restart

@@ -20,6 +20,7 @@ const (
 	AM_REGISTER_CC_ARG    = "register_chaincode"
 	AM_NEW_REQ_ARG        = "new_request"
 	AM_NEW_BID_ARG        = "new_proposal"
+	AM_NEW_CNTR_ARG       = "new_counter"
 	AM_GET_CC_NAME_ARG    = "get_cc_name"
 	AM_GET_U_ASST_ARG     = "get_user_assets"
 	AM_GET_AST_RIGHTS_ARG = "get_asset_rights"

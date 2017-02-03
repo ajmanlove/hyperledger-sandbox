@@ -58,6 +58,9 @@ func (t *AssetManagementCC) Invoke(stub shim.ChaincodeStubInterface, function st
 	case common.AM_NEW_BID_ARG:
 		return t.manage_proposal(stub, args)
 
+	case common.AM_NEW_CNTR_ARG:
+		return t.manage_counter(stub, args)
+
 	default:
 		return nil, errors.New("Unrecognized Invoke function: " + function)
 	}
@@ -271,6 +274,77 @@ func (t *AssetManagementCC) manage_proposal(stub shim.ChaincodeStubInterface, ar
 	if err != nil {
 		logger.Error(err)
 		return nil, errors.New("Failed to assign rights to id " + bidder)
+	}
+
+	return nil, nil
+}
+
+func (t *AssetManagementCC) manage_counter(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 3 {
+		return nil, errors.New("Expects 3 args ['proposalId', 'updater', 'updatedDate']")
+	}
+
+	proposalId := args[0]
+	updater := args[2]
+	// TODO parse err
+	updated, err := strconv.ParseUint(args[3], 10, 64)
+
+	record, err := um.GetUserAssetRecord(stub, updater)
+	if err != nil {
+		return nil, err
+	}
+
+	var prop common.ProposalRecord
+	found := false
+	for _, proposal := range record.Proposals {
+		if proposal.ProposalId == proposalId {
+			prop = proposal
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("No propsal record %s for user %s", proposalId, updater)
+	}
+
+	prop.Updated = updated
+	prop.UpdatedBy = updater
+
+	// something of a hack to get the second party
+	// TODO review
+	astR, err := am.GetAssetRecord(stub, prop.SubmissionId)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get original submission due to : %s", err)
+	}
+
+	var recipient string = ""
+	for k := range astR.Rights {
+		if k != updater {
+			recipient = k
+			break
+		}
+	}
+	if recipient == "" {
+		return nil, errors.New("Illegal state, no second party")
+	}
+
+	_, err = um.SaveUserAssetRecord(stub, updater, record)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to save record for id " + updater)
+	}
+
+	record, err = um.GetUserAssetRecord(stub, recipient)
+	if err != nil {
+		return nil, err
+	}
+
+	prop.Updated = updated
+	prop.UpdatedBy = updater
+	_, err = um.SaveUserAssetRecord(stub, recipient, record)
+	if err != nil {
+		logger.Error(err)
+		return nil, errors.New("Failed to save record for id " + recipient)
 	}
 
 	return nil, nil
