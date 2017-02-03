@@ -1,12 +1,12 @@
 import os
 import os.path
-from subprocess import check_call
+# from subprocess import check_call
 import sys
-from hyperledger.client import Client
-
+# from hyperledger.client import Client
 import requests
 import json
 
+import time
 
 import configparser
 
@@ -17,6 +17,11 @@ reinsurer2_hl_creds = ("reinsurer2", "RmMio3LCk37J")
 insurer2_hl_creds = ("insurer2", "1wtM0CXjIVXr")
 reinsurer3_hl_creds = ("reinsurer3", "atjQRL2S6FJx")
 
+cch = "CHAINCODE"
+am = "asset_management"
+rr = "reinsurance_request"
+rp = "reinsurance_proposal"
+
 def system_test():
     if not os.path.exists(".setup.ini"):
         print("poc_test requires the .setup.ini file written by setup_poc.py")
@@ -26,21 +31,53 @@ def system_test():
     config.read('.setup.ini')
     print(config.sections())
 
-    c = Client(base_url="http://127.0.0.1:7050")
+    # c = Client(base_url="http://127.0.0.1:7050")
 
-    submit(config, c)
+    subId = submit(config)
 
-    print("Not implemented")
+    ri1prop = propose(config, "reinsurer1", subId, "insurer1")
+
+    ## Ensure reinsurer2 (the other requestee) cannot view the proposal
+    r = get_proposal(config, "reinsurer2", ri1prop, post)
+    assert 'error' in r
+    assert 'Insuffienct rights on asset' in r['error']['data']
+
+    ri2prop = propose(config, "reinsurer2", subId, "insurer1")
+    ## Ensure reinsurer1 (the other requestee) cannot view the proposal
+    r = get_proposal(config, "reinsurer1", ri2prop, post)
+    assert 'error' in r
+    assert 'Insuffienct rights on asset' in r['error']['data']
+
+    ## Ensure insurer1 can counter
+    counter(config, "insurer1", ri1prop, "reinsurer1")
+
+    ## Ensure reinsurer1 can counter
+    counter(config, "reinsurer1", ri1prop, "insurer1")
+
+    ## Ensure reinsurer1 can't accept or reject
+    ## TODO invoke does not return the error condition in REST
+    # response = post_reject(config, "reinsurer1", ri2prop, post)
+    # reject(config, "reinsurer1", ri2prop, "insurer1")
+
+    ## Reject reinsurer2 proposal
+    reject(config, "insurer1", ri2prop, "reinsurer2")
+
+    ## Accept reinsure1 proposal
+    accept(config, "insurer1", ri1prop, "reinsurer1")
+
+    print("System Test COMPLETE")
     exit(1)
 
-def submit(config, client):
+## submit request, return submission id
+def submit(config):
+    print("submit()")
     data = {
         "jsonrpc": "2.0",
         "method": "invoke",
         "params": {
             "type": 1,
             "chaincodeID": {
-                "name": config['CHAINCODE']['reinsurance_request']
+                "name": config[cch][rr]
             },
             "ctorMsg": {
                 "function": "submit",
@@ -54,166 +91,376 @@ def submit(config, client):
         "id": 1
     }
 
-    post(data)
+    ## Invoke the submission
+    assert_post(data)
+    time.sleep(2) ## TODO try to avoid a sleep
+
+    ## Get insurer1 user assets and verify
+    i1ua = to_json(get_user_assets(config, "insurer1"))
+    ## Get the last submission id
+    keys = i1ua['submissions'].keys()
+    last = sorted(keys, key=subm_sort_key)[len(keys) - 1]
+
+    ## Get insurer1 asset rights and verify
+    i1ar = to_json(get_asset_rights(config, 'insurer1', last))
+    assert i1ar == {'Rights': [0, 1], 'Exists': True}
+
+    ## Get and verify reinsurer 1 asset rights and user assets
+    ri1ar = to_json(get_asset_rights(config, 'reinsurer1', last))
+    assert ri1ar == {'Rights': [1], 'Exists': True}
+    ri1ua = to_json(get_user_assets(config, "reinsurer1"))
+    assert last in ri1ua['requests']
 
 
-    print("submit()")
+    ## Get the submission record and verify
+    submission = to_json(get_submission(config, "insurer1", last))
+    assert submission["id"] == last
+    ## TODO verify whole submission object
 
-def propose():
+    ## Ensure reinsurer1 and reinsurer2 can view the submission
+    assert submission == to_json(get_submission(config, "reinsurer1", last))
+    assert submission == to_json(get_submission(config, "reinsurer2", last))
+
+    ## Ensure reinsurer3 and insurer2 cannot view the submission
+    r = get_submission(config, "reinsurer3", last, post)
+    assert 'error' in r
+    assert 'Insuffienct rights on asset' in r['error']['data']
+
+    r = get_submission(config, "insurer2", last, post)
+    assert 'error' in r
+    assert 'Insuffienct rights on asset' in r['error']['data']
+
+    return last
+
+
+def get_submission(config, user, id, poster=None):
+    print("get_submission() [{0}, {1}]".format(user, id))
+    data = {
+        "jsonrpc": "2.0",
+        "method": "query",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][rr]
+            },
+            "ctorMsg": {
+                "function": "get_request",
+                "args": [
+                    id
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 3
+    }
+
+    if poster is None:
+        return assert_post(data)
+    else:
+        return poster(data)
+
+def subm_sort_key(v):
+    return int(v.split("-")[1])
+
+def propose(config, user, requestId, requestUser):
     print("propose()")
+    data = {
+        "jsonrpc": "2.0",
+        "method": "invoke",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][rp]
+            },
+            "ctorMsg": {
+                "function": "propose",
+                "args": [
+                    requestId, "some user {0} text".format(user)
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 2
+    }
 
-def counter():
+    ## Propose
+    assert_post(data)
+    time.sleep(2) ## TODO try to avoid a sleep
+
+    ## Get insurer1 user assets and verify
+    ## TODO verify
+    proposerua = to_json(get_user_assets(config, user))
+    propId = None
+    for k,v in proposerua['proposals'].items():
+        if v['submissionId'] == requestId:
+            propId = k
+
+    assert propId is not None
+
+    ## Get the proposal and verify
+    proposal = to_json(get_proposal(config, user, propId))
+    assert propId == proposal['id']
+    assert requestId == proposal['requestId']
+    assert user == proposal['bidder']
+    assert user == proposal['updatedBy']
+    assert "bid" == proposal['status']
+
+    ## Assert the requesting user can access the proposal
+    assert proposal == to_json(get_proposal(config, requestUser, propId))
+
+    ## verify that user assets have changed (updated, updatedBy)
+    ua = to_json(get_user_assets(config, user))
+    assert propId in ua['proposals']
+    assert requestId == ua['proposals'][propId]['submissionId']
+    assert propId == ua['proposals'][propId]['proposalId']
+    assert user in ua['proposals'][propId]['updatedBy']
+
+    ua = to_json(get_user_assets(config, requestUser))
+    assert propId in ua['proposals']
+    assert requestId == ua['proposals'][propId]['submissionId']
+    assert propId == ua['proposals'][propId]['proposalId']
+    assert user in ua['proposals'][propId]['updatedBy']
+
+    return propId
+
+def get_proposal(config, user, id, poster=None):
+    print("get_proposal() [{0}, {1}]".format(user, id))
+
+    data = {
+        "jsonrpc": "2.0",
+        "method": "query",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][rp]
+            },
+            "ctorMsg": {
+                "function": "get_proposal",
+                "args": [
+                    id
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 3
+    }
+
+    if poster is None:
+        return assert_post(data)
+    else:
+        return poster(data)
+
+def counter(config, user, propId, userB):
     print("counter()")
+    counterText = "COUNTER text by user {0}".format(user)
+    data = {
+        "jsonrpc": "2.0",
+        "method": "invoke",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][rp]
+            },
+            "ctorMsg": {
+                "function": "counter",
+                "args": [
+                    propId, counterText
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 2
+    }
 
-def accept():
+    ## Propose
+    assert_post(data)
+    time.sleep(2) ## TODO try to avoid a sleep
+
+    ## Get the proposal and verify
+    proposal = to_json(get_proposal(config, user, propId))
+    assert user == proposal['updatedBy']
+    assert counterText == proposal['contractText']
+    assert "counter" == proposal['status']
+
+    ## Assert the requesting user can access the proposal
+    assert proposal == to_json(get_proposal(config, userB, propId))
+
+    ## verify that user assets have changed (updated, updatedBy)
+    ua = to_json(get_user_assets(config, user))
+    assert propId in ua['proposals']
+    assert user in ua['proposals'][propId]['updatedBy']
+
+    ua = to_json(get_user_assets(config, userB))
+    assert propId in ua['proposals']
+    assert user in ua['proposals'][propId]['updatedBy']
+
+
+def accept(config, user, propId, acceptedUser):
     print("accept()")
 
-def reject():
+    data = {
+        "jsonrpc": "2.0",
+        "method": "invoke",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][rp]
+            },
+            "ctorMsg": {
+                "function": "accept",
+                "args": [
+                    propId
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 2
+    }
+
+    ##post
+    assert_post(data)
+    time.sleep(2) ## TODO try to avoid a sleep
+
+    ## Get the proposal and verify
+    proposal = to_json(get_proposal(config, user, propId))
+    assert user == proposal['updatedBy']
+    assert "accepted" == proposal['status']
+
+    ## Assert the rejected user can access the proposal
+    assert proposal == to_json(get_proposal(config, acceptedUser, propId))
+
+    ## verify user assets
+    ua = to_json(get_user_assets(config, acceptedUser))
+    assert propId not in ua['proposals']
+    assert propId in ua['accepted']
+
+    ua = to_json(get_user_assets(config, user))
+    assert propId not in ua['proposals']
+    assert propId in ua['accepted']
+
+def post_reject(config, user, propId, poster):
     print("reject()")
+
+    data = {
+        "jsonrpc": "2.0",
+        "method": "invoke",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][rp]
+            },
+            "ctorMsg": {
+                "function": "reject",
+                "args": [
+                    propId
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 2
+    }
+
+    ##post
+    return poster(data)
+
+
+def reject(config, user, propId, rejectedUser):
+    print("reject()")
+    post_reject(config, user, propId, assert_post)
+    time.sleep(2) ## TODO try to avoid a sleep
+
+    ## Get the proposal and verify
+    proposal = to_json(get_proposal(config, user, propId))
+    assert user == proposal['updatedBy']
+    assert "rejected" == proposal['status']
+
+    ## Assert the rejected user can access the proposal
+    assert proposal == to_json(get_proposal(config, rejectedUser, propId))
+
+    ## verify user assets
+    ua = to_json(get_user_assets(config, rejectedUser))
+    assert propId not in ua['proposals']
+    assert propId in ua['rejected']
+
+    ua = to_json(get_user_assets(config, user))
+    assert propId not in ua['proposals']
+    assert propId in ua['rejected']
+
+
+
+def get_user_assets(config, user):
+    print("get_user_assets() [{0}]".format(user))
+    data = {
+        "jsonrpc": "2.0",
+        "method": "query",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config[cch][am]
+            },
+            "ctorMsg": {
+                "function": "get_user_assets",
+                "args": [
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 3
+    }
+
+    return assert_post(data)
+
+def get_asset_rights(config, user, asset):
+    print("get_asset_rights() [{0}, {1}]".format(user, asset))
+    data = {
+        "jsonrpc": "2.0",
+        "method": "query",
+        "params": {
+            "type": 1,
+            "chaincodeID": {
+                "name": config['CHAINCODE'][am]
+            },
+            "ctorMsg": {
+                "function": "get_asset_rights",
+                "args": [
+                    user, asset
+                ]
+            },
+            "secureContext": user,
+            "attributes": ["enrollmentId"]
+        },
+        "id": 3
+    }
+
+    return assert_post(data)
 
 def post(data):
     data_json = json.dumps(data)
     headers = {'Content-type': 'application/json'}
     response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
 
-    print("RESPONSE : ", response)
-
     if response.status_code != 200:
         print("Unexpected status code in registrar " + response.status_code)
         exit(1)
 
-    print("Response JSON " + response.text)
+    # print("Response JSON " + response.text)
 
-def init_hyperledger():
-    print("Initializing hyperledger environment...")
-    register_hl_user(setup_hl_creds[0], setup_hl_creds[1])
+    return response.json()
 
-    c = Client(base_url="http://127.0.0.1:7050")
-    # enroll_cc_name = deploy_chaincode(
-    #     c, setup_hl_creds[0], "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/enrollment_service", []
-    # )
+def assert_post(data):
+    res = post(data)
+    assert res['result']['status'] == 'OK'
+    return res['result']['message']
 
-    asset_cc_name = deploy_chaincode(
-        c, setup_hl_creds[0], "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/asset_management", []
-    )
-
-    print("Asset chaincode name is " + asset_cc_name)
-
-    request_cc_name = deploy_chaincode(
-        c, setup_hl_creds[0],
-        "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/reinsurance_request",
-        [asset_cc_name]
-    )
-
-    print("Request chaincode name is " + request_cc_name)
-
-    proposal_cc_name = deploy_chaincode(
-        c, setup_hl_creds[0],
-        "https://github.com/ajmanlove/hyperledger-sandbox/reinsurance_poc/reinsurance_proposal",
-        [asset_cc_name]
-    )
-
-    print("Enrolling test users...")
-    register_hl_user(insurer1_hl_creds[0], insurer1_hl_creds[1])
-    register_hl_user(reinsurer1_hl_creds[0], reinsurer1_hl_creds[1])
-    register_hl_user(reinsurer2_hl_creds[0], reinsurer2_hl_creds[1])
-    register_hl_user(insurer2_hl_creds[0], insurer2_hl_creds[1])
-    register_hl_user(reinsurer3_hl_creds[0], reinsurer3_hl_creds[1])
-
-    register_cc(asset_cc_name, setup_hl_creds[0], request_cc_name, "reinsurance_request")
-    register_cc(asset_cc_name, setup_hl_creds[0], proposal_cc_name, "reinsurance_proposal")
-
-    print("")
-    print("-----------------------------------------------------------")
-    print("asset_management chaincode name: ", asset_cc_name)
-    print("reinsurance_request chaincode name: ", request_cc_name)
-    print("reinsurance_proposal chaincode name: ", proposal_cc_name)
-    print("-----------------------------------------------------------")
-    print("")
-    print("Init of hyperledger environment COMPLETE")
-
-def register_cc(am_name, user, cc_name, identifier):
-    print("Registering chaincode {} as {}".format(cc_name, identifier))
-    data = {
-      "jsonrpc": "2.0",
-      "method": "invoke",
-      "params": {
-        "type": 1,
-        "chaincodeID": {
-          "name": am_name
-        },
-        "ctorMsg": {
-          "function": "register_chaincode",
-          "args": [cc_name, identifier]
-        },
-        "secureContext": user,
-        "attributes": ["enrollmentId", "contact"]
-      },
-      "id": 3
-    }
-
-    data_json = json.dumps(data)
-    headers = {'Content-type': 'application/json'}
-    response = requests.post("http://localhost:7050/chaincode", data=data_json, headers=headers)
-
-    print("RESPONSE : ", response)
-
-    if response.status_code != 200:
-        print("Unexpected status code in registrar " + response.status_code)
-        exit(1)
-
-    print("Response JSON " + response.text)
-
-
-def deploy_chaincode(client, user, path, args):
-    print("Deploying chaincode {} with args {}".format(path, args))
-    r = client.chaincode_deploy(
-        chaincode_path = path,
-        type = 1,
-        function = "init",
-        args = args,
-        secure_context = user,
-    )
-
-    s = json.dumps(r)
-    print("RESPONSE " + s)
-
-    if r["result"]["status"] != "OK":
-        print("Exiting with deploy response status of ", r["status"])
-
-    print("Deploy of chaincode {} COMPLETE".format(path))
-
-    return r["result"]["message"]
-
-def register_hl_user(user, key):
-    print("Register hl user " + user + " with key " + key)
-    data = {
-      "enrollId": user,
-      "enrollSecret": key
-    }
-
-    data_json = json.dumps(data)
-    headers = {'Content-type': 'application/json'}
-    response = requests.post("http://localhost:7050/registrar", data=data_json, headers=headers)
-
-    print("RESPONSE : ", response)
-
-    if response.status_code != 200:
-        print("Unexpected status code in registrar " + r.status_code)
-        exit(1)
-
-    print("Response JSON " + response.text)
-
-def stop():
-    print("Tearing down poc environment...")
-    teardown_docker()
-    print("Docker teardown COMPLETE")
-
-
-def teardown_docker():
-    os.chdir("docker")
-    check_call("docker-compose down", shell=True)
-    check_call("docker-compose rm -f", shell=True)
+def to_json(string):
+    return json.loads(string)
 
 commands = {
     "system_test" : system_test,
